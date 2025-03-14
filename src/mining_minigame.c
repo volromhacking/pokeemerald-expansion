@@ -1598,6 +1598,16 @@ enum
     CRACK_POS_MAX,
 };
 
+static void DestroyAllSprites() 
+{
+    u32 i;
+
+    for (i=0;i<MAX_SPRITES;i++)       
+    {
+        DestroySpriteAndFreeResources(&gSprites[i]);
+    }
+}
+
 static void Excavation_SetupCB(void) 
 {
     switch(gMain.state) 
@@ -1606,13 +1616,8 @@ static void Excavation_SetupCB(void)
             SetVBlankHBlankCallbacksToNull();
             ClearScheduledBgCopiesToVram();
             ScanlineEffect_Stop();
-            //SetGpuReg(REG_OFFSET_WIN0H, 0);
-            //SetGpuReg(REG_OFFSET_WIN0V, 0);
-            //SetGpuReg(REG_OFFSET_WIN1H, 0);
-            //SetGpuReg(REG_OFFSET_WIN1V, 0);
-            //SetGpuReg(REG_OFFSET_WININ, 0);
-            //SetGpuReg(REG_OFFSET_WINOUT, 0);
-            DmaClearLarge16(3, (void *)VRAM, VRAM_SIZE, 0x1000);
+            CpuFill16(0, (void *)VRAM, VRAM_SIZE);
+            CpuFill32(0, (void *)OAM, OAM_SIZE);
             gMain.state++;
             break;
 
@@ -1621,6 +1626,8 @@ static void Excavation_SetupCB(void)
             ResetPaletteFade();
             ResetSpriteData();
             ResetTasks();
+            BuildOamBuffer();
+            LoadOam();
             gMain.state++;
             break;
 
@@ -1645,9 +1652,12 @@ static void Excavation_SetupCB(void)
             break;
 
         case STATE_LOAD_SPRITES:
-            InitBuriedItems();
-            Excavation_LoadSpriteGraphics();
-            gMain.state++;
+            if (!gPaletteFade.active) 
+            {
+                InitBuriedItems();
+                Excavation_LoadSpriteGraphics();            
+                gMain.state++;
+            }
             break;
 
         case STATE_WAIT_FADE:
@@ -1657,7 +1667,7 @@ static void Excavation_SetupCB(void)
 
         case STATE_FADE:
             BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
-            gMain.state++;
+            gMain.state++; 
             break;
 
         case STATE_SET_CALLBACKS:
