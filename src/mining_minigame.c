@@ -2075,7 +2075,7 @@ static void Excavation_LoadSpriteGraphics(void)
     animConfigY.clampAfter = 0;
     animConfigY.delayFrames = 0;
 
-    //LoadCompressedSpriteSheet(sSpriteSheet_Blank);
+    LoadCompressedSpriteSheet(sSpriteSheet_Blank);
 
     LoadSpritePalette(sSpritePal_Cursor);
     LoadCompressedSpriteSheet(sSpriteSheet_Cursor);
