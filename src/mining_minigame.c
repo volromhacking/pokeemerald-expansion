@@ -180,6 +180,8 @@ struct ExcavationState
 #define TAG_HIT_HAMMER          12
 #define TAG_HIT_PICKAXE         13
 
+#define TAG_NOTHING             100
+
 static EWRAM_DATA struct ExcavationState *sExcavationUiState = NULL;
 static EWRAM_DATA u8 *sBg1TilemapBuffer = NULL; // TODO: Add this to sExcavationUi struct (?)
 static EWRAM_DATA u8 *sBg2TilemapBuffer = NULL;
@@ -268,6 +270,8 @@ const u32 gHitHammerGfx[] = INCBIN_U32("graphics/mining_minigame/hit_hammer.4bpp
 const u32 gHitPickaxeGfx[] = INCBIN_U32("graphics/mining_minigame/hit_pickaxe.4bpp.lz");
 const u16 gHitEffectPal[] = INCBIN_U16("graphics/mining_minigame/hit_effects.gbapal");
 
+const u32 gBlankStuff[] = INCBIN_U32("graphics/mining_minigame/blank_stuff.4bpp.lz");
+
 static const struct SpritePalette sSpritePal_Blank1[] =
 {
     {gCursorPal, TAG_BLANK1},
@@ -277,6 +281,12 @@ static const struct SpritePalette sSpritePal_Blank1[] =
 static const struct SpritePalette sSpritePal_Blank2[] =
 {
     {gCursorPal, TAG_BLANK2},
+    {NULL},
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_Blank[] =
+{
+    {gBlankStuff, 32, TAG_NOTHING},
     {NULL},
 };
 
@@ -1612,7 +1622,8 @@ static void Excavation_SetupCB(void)
             //SetGpuReg(REG_OFFSET_WIN1V, 0);
             //SetGpuReg(REG_OFFSET_WININ, 0);
             //SetGpuReg(REG_OFFSET_WINOUT, 0);
-            DmaClearLarge16(3, (void *)VRAM, VRAM_SIZE, 0x1000);
+            CpuFill16(0, (void *)VRAM, VRAM_SIZE);
+            CpuFill32(0, (void *)OAM, OAM_SIZE);
             gMain.state++;
             break;
 
@@ -1719,6 +1730,7 @@ static void Task_Excavation_WaitFadeAndBail(u8 taskId)
 
 static void Excavation_MainCB(void) 
 {
+    MgbaPrintf(MGBA_LOG_WARN, "Main CB");
     RunTasks();
     AdvanceComfyAnimations();
     AnimateSprites();
@@ -2063,6 +2075,8 @@ static void Excavation_LoadSpriteGraphics(void)
     animConfigY.friction = Q_24_8(1150);
     animConfigY.clampAfter = 0;
     animConfigY.delayFrames = 0;
+
+    LoadCompressedSpriteSheet(sSpriteSheet_Blank);
 
     LoadSpritePalette(sSpritePal_Cursor);
     LoadCompressedSpriteSheet(sSpriteSheet_Cursor);
