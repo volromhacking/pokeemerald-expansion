@@ -1730,7 +1730,6 @@ static void Task_Excavation_WaitFadeAndBail(u8 taskId)
 
 static void Excavation_MainCB(void) 
 {
-    MgbaPrintf(MGBA_LOG_WARN, "Main CB");
     RunTasks();
     AdvanceComfyAnimations();
     AnimateSprites();
@@ -2076,7 +2075,7 @@ static void Excavation_LoadSpriteGraphics(void)
     animConfigY.clampAfter = 0;
     animConfigY.delayFrames = 0;
 
-    LoadCompressedSpriteSheet(sSpriteSheet_Blank);
+    //LoadCompressedSpriteSheet(sSpriteSheet_Blank);
 
     LoadSpritePalette(sSpritePal_Cursor);
     LoadCompressedSpriteSheet(sSpriteSheet_Cursor);
