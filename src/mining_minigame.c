@@ -34,7 +34,7 @@
 #include "comfy_anim.h"
 #include "data/mining_minigame.h"
 
-// >> Specials <<
+/* >> Specials << */
 void StartMining(void);
 
 /* >> Callbacks << */
@@ -52,7 +52,7 @@ static void Task_MiningMainInput(u8 taskId);
 static void Task_MiningFadeAndExitMenu(u8 taskId);
 static void Task_MiningPrintResult(u8 taskId);
 
-// >> Others <<
+/* >> Others << */
 static void Mining_FadeAndBail(void);
 static bool8 Mining_LoadBgGraphics(void);
 static void Mining_LoadSpriteGraphics(void);
@@ -75,19 +75,20 @@ static void GetItemOrPrintError(u8 taskId, u32 itemIndex, u32 itemId);
 static void CheckItemAndPrint(u8 taskId, u32 itemIndex, u32 itemId);
 static void MakeCursorInvisible(void);
 static void HandleGameFinish(u8 taskId);
-static void PrintItemSuccess(u32 buriedItemIndex);
+static void PrintItemSuccess(u32 buriedItemsIndex);
 static u32 GetTotalNumberOfBuriedItems(void);
 static void InitBuriedItems(void);
 static bool32 AreAllItemsFound(void);
 static void SetBuriedItemsId(u32 index, u32 itemId);
 static void SetBuriedItemStatus(u32 index, bool32 status);
-static u32 GetBuriedItemId(u32 index);
+static u32 GetBuriedBagItemId(u32 index);
+static u32 GetBuriedMiningItemId(u32 index);
 static u32 GetNumberOfFoundItems(void);
 static bool32 GetBuriedItemStatus(u32 index);
 static void ExitMiningUI(u8 taskId);
 static void WallCollapseAnimation();
 
-// >> Debug <<
+/* >> Debug << */
 static u32 Debug_SetNumberOfBuriedItems(u32 rnd);
 #if DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
 static u32 Debug_CreateRandomItem(u32 random, u32 itemId);
@@ -98,8 +99,11 @@ static void Debug_RaiseSpritePriority(u32 spriteId);
 
 struct BuriedItem 
 {
-    u32 itemId;
-    bool32 status;
+    u32 bagItemId;
+    u32 miningItemId;
+    bool32 isDugUp;
+    bool32 isSelected;
+    u32 buriedState;
 };
 
 struct MiningState 
@@ -132,31 +136,10 @@ struct MiningState
     // Stress Level
     u32 stressLevelCount;               // How many cracks in one 32x32 portion
     u32 stressLevelPos;                 // Which crack portion
-     
 
-    struct BuriedItem buriedItem[4];
-
-    // Item 1
-    u32 state_item1;
-    u32 Item1_TilesToDigUp; // TODO: Remove this
-
-    // Item 2
-    u32 state_item2;
-    u32 Item2_TilesToDigUp; // TODO: Remove this
-
-    // Item 3
-    u32 state_item3;
-    u32 Item3_TilesToDigUp; // TODO: Remove this
-
-    // Item 4
-    u32 state_item4;
-    u32 Item4_TilesToDigUp; // TODO: Remove this
-
-    // Stone 1
-    u32 state_stone1;
-
-    // Stone 2
-    u32 state_stone2;
+    // Items and Stones
+    struct BuriedItem buriedItems[MAX_NUM_BURIED_ITEMS];
+    struct BuriedItem buriedStones[COUNT_MAX_NUMBER_STONES];
 };
 
 // Win IDs
@@ -1088,8 +1071,8 @@ static const struct SpriteTemplate gSpriteStoneMushroom2 =
 
 struct MiningItem 
 {
-    u32 excItemId;
-    u32 realItemId;
+    u32 miningItemId;
+    u32 bagItemId;
     u32 top; // starts with 0
     u32 left; // starts with 0
     u32 totalTiles; // starts with 0
@@ -1111,8 +1094,8 @@ static const struct MiningItem MiningItemList[] =
 {
     [ITEMID_NONE] = 
     {
-        .excItemId = ITEMID_NONE,
-        .realItemId = 0,
+        .miningItemId = ITEMID_NONE,
+        .bagItemId = 0,
         .top = 0,
         .left = 0,
         .totalTiles = 0,
@@ -1122,8 +1105,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_HARD_STONE] = 
     {
-        .excItemId = ITEMID_HARD_STONE,
-        .realItemId = ITEM_HARD_STONE,
+        .miningItemId = ITEMID_HARD_STONE,
+        .bagItemId = ITEM_HARD_STONE,
         .top = 1,
         .left = 1,
         .totalTiles = 3,
@@ -1133,8 +1116,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_REVIVE] = 
     {
-        .excItemId = ITEMID_REVIVE,
-        .realItemId = ITEM_REVIVE,
+        .miningItemId = ITEMID_REVIVE,
+        .bagItemId = ITEM_REVIVE,
         .top = 2,
         .left = 2,
         .totalTiles = 4,
@@ -1144,8 +1127,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_STAR_PIECE] = 
     {
-        .excItemId = ITEMID_STAR_PIECE,
-        .realItemId = ITEM_STAR_PIECE,
+        .miningItemId = ITEMID_STAR_PIECE,
+        .bagItemId = ITEM_STAR_PIECE,
         .top = 2,
         .left = 2,
         .totalTiles = 4,
@@ -1155,9 +1138,9 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_DAMP_ROCK] = 
     {
-        .excItemId = ITEMID_DAMP_ROCK,
+        .miningItemId = ITEMID_DAMP_ROCK,
         // Change this
-        .realItemId = ITEM_WATER_STONE,
+        .bagItemId = ITEM_WATER_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
@@ -1167,8 +1150,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_RED_SHARD] = 
     {
-        .excItemId = ITEMID_RED_SHARD,
-        .realItemId = ITEM_RED_SHARD,
+        .miningItemId = ITEMID_RED_SHARD,
+        .bagItemId = ITEM_RED_SHARD,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
@@ -1178,8 +1161,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_BLUE_SHARD] = 
     {
-        .excItemId = ITEMID_BLUE_SHARD,
-        .realItemId = ITEM_BLUE_SHARD,
+        .miningItemId = ITEMID_BLUE_SHARD,
+        .bagItemId = ITEM_BLUE_SHARD,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
@@ -1189,8 +1172,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_YELLOW_SHARD] = 
     {
-        .excItemId = ITEMID_YELLOW_SHARD,
-        .realItemId = ITEM_YELLOW_SHARD,
+        .miningItemId = ITEMID_YELLOW_SHARD,
+        .bagItemId = ITEM_YELLOW_SHARD,
         .top = 2,
         .left = 3,
         .totalTiles = 8,
@@ -1200,8 +1183,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_GREEN_SHARD] = 
     {
-        .excItemId = ITEMID_GREEN_SHARD,
-        .realItemId = ITEM_GREEN_SHARD,
+        .miningItemId = ITEMID_GREEN_SHARD,
+        .bagItemId = ITEM_GREEN_SHARD,
         .top = 2,
         .left = 3,
         .totalTiles = 10,
@@ -1211,9 +1194,9 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_IRON_BALL] = 
     {
-        .excItemId = ITEMID_IRON_BALL,
+        .miningItemId = ITEMID_IRON_BALL,
         // Change this
-        .realItemId = ITEM_ULTRA_BALL,
+        .bagItemId = ITEM_ULTRA_BALL,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
@@ -1223,9 +1206,9 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_REVIVE_MAX] = 
     {
-        .excItemId = ITEMID_REVIVE_MAX,
+        .miningItemId = ITEMID_REVIVE_MAX,
         // Change this
-        .realItemId = ITEM_MAX_REVIVE,
+        .bagItemId = ITEM_MAX_REVIVE,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
@@ -1235,9 +1218,9 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_EVER_STONE] = 
     {
-        .excItemId = ITEMID_EVER_STONE,
+        .miningItemId = ITEMID_EVER_STONE,
         // Change this
-        .realItemId = ITEM_EVERSTONE,
+        .bagItemId = ITEM_EVERSTONE,
         .top = 1,
         .left = 3,
         .totalTiles = 7,
@@ -1247,8 +1230,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_HEART_SCALE] = 
     {
-        .excItemId = ITEMID_HEART_SCALE,
-        .realItemId = ITEM_HEART_SCALE,
+        .miningItemId = ITEMID_HEART_SCALE,
+        .bagItemId = ITEM_HEART_SCALE,
         .top = 1,
         .left = 1,
         .totalTiles = 2,
@@ -1258,8 +1241,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_OVAL_STONE] = 
     {
-        .excItemId = ITEMID_OVAL_STONE,
-        .realItemId = ITEM_HEART_SCALE,
+        .miningItemId = ITEMID_OVAL_STONE,
+        .bagItemId = ITEM_HEART_SCALE,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
@@ -1269,8 +1252,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_LIGHT_CLAY] = 
     {
-        .excItemId = ITEMID_LIGHT_CLAY,
-        .realItemId = ITEM_HEART_SCALE,
+        .miningItemId = ITEMID_LIGHT_CLAY,
+        .bagItemId = ITEM_HEART_SCALE,
         .top = 3,
         .left = 3,
         .totalTiles = 10,
@@ -1280,8 +1263,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_HEAT_ROCK] = 
     {
-        .excItemId = ITEMID_HEAT_ROCK,
-        .realItemId = ITEM_WATER_STONE,
+        .miningItemId = ITEMID_HEAT_ROCK,
+        .bagItemId = ITEM_WATER_STONE,
         .top = 2,
         .left = 3,
         .totalTiles = 9,
@@ -1291,8 +1274,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_ICY_ROCK] = 
     {
-        .excItemId = ITEMID_ICY_ROCK,
-        .realItemId = ITEM_WATER_STONE,
+        .miningItemId = ITEMID_ICY_ROCK,
+        .bagItemId = ITEM_WATER_STONE,
         .top = 3,
         .left = 3,
         .totalTiles = 11,
@@ -1302,8 +1285,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_SMOOTH_ROCK] = 
     {
-        .excItemId = ITEMID_SMOOTH_ROCK,
-        .realItemId = ITEM_WATER_STONE,
+        .miningItemId = ITEMID_SMOOTH_ROCK,
+        .bagItemId = ITEM_WATER_STONE,
         .top = 3,
         .left = 3,
         .totalTiles = 7,
@@ -1313,8 +1296,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_LEAF_STONE] = 
     {
-        .excItemId = ITEMID_LEAF_STONE,
-        .realItemId = ITEM_LEAF_STONE,
+        .miningItemId = ITEMID_LEAF_STONE,
+        .bagItemId = ITEM_LEAF_STONE,
         .top = 3,
         .left = 2,
         .totalTiles = 7,
@@ -1324,8 +1307,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_FIRE_STONE] =
     {
-        .excItemId = ITEMID_FIRE_STONE,
-        .realItemId = ITEM_FIRE_STONE,
+        .miningItemId = ITEMID_FIRE_STONE,
+        .bagItemId = ITEM_FIRE_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
@@ -1335,8 +1318,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_WATER_STONE] = 
     {
-        .excItemId = ITEMID_WATER_STONE,
-        .realItemId = ITEM_WATER_STONE,
+        .miningItemId = ITEMID_WATER_STONE,
+        .bagItemId = ITEM_WATER_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
@@ -1346,8 +1329,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_THUNDER_STONE] = 
     {
-        .excItemId = ITEMID_THUNDER_STONE,
-        .realItemId = ITEM_THUNDER_STONE,
+        .miningItemId = ITEMID_THUNDER_STONE,
+        .bagItemId = ITEM_THUNDER_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 6,
@@ -1357,8 +1340,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_MOON_STONE] = 
     {
-        .excItemId = ITEMID_MOON_STONE,
-        .realItemId = ITEM_MOON_STONE,
+        .miningItemId = ITEMID_MOON_STONE,
+        .bagItemId = ITEM_MOON_STONE,
         .top = 1,
         .left = 3,
         .totalTiles = 5,
@@ -1368,8 +1351,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_SUN_STONE] = 
     {
-        .excItemId = ITEMID_SUN_STONE,
-        .realItemId = ITEM_SUN_STONE,
+        .miningItemId = ITEMID_SUN_STONE,
+        .bagItemId = ITEM_SUN_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 6,
@@ -1379,8 +1362,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_ODD_KEY_STONE] = 
     {
-        .excItemId = ITEMID_ODD_KEY_STONE,
-        .realItemId = ITEM_SUN_STONE,
+        .miningItemId = ITEMID_ODD_KEY_STONE,
+        .bagItemId = ITEM_SUN_STONE,
         .top = 3,
         .left = 3,
         .totalTiles = 15,
@@ -1390,8 +1373,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_SKULL_FOSSIL] = 
     {
-        .excItemId = ITEMID_SKULL_FOSSIL,
-        .realItemId = ITEM_SUN_STONE,
+        .miningItemId = ITEMID_SKULL_FOSSIL,
+        .bagItemId = ITEM_SUN_STONE,
         .top = 3,
         .left = 3,
         .totalTiles = 13,
@@ -1401,8 +1384,8 @@ static const struct MiningItem MiningItemList[] =
     },
     [ITEMID_ARMOR_FOSSIL] = 
     {
-        .excItemId = ITEMID_ARMOR_FOSSIL,
-        .realItemId = ITEM_SUN_STONE,
+        .miningItemId = ITEMID_ARMOR_FOSSIL,
+        .bagItemId = ITEM_SUN_STONE,
         .top = 3,
         .left = 3,
         .totalTiles = 15,
@@ -1527,28 +1510,34 @@ static void Mining_Init(MainCallback callback)
     sMiningUiState->stressLevelCount = 0;
     sMiningUiState->stressLevelPos = 0;
 
+    // Default the values for each item
+    sMiningUiState->buriedItems[0].buriedState = 0;
+    sMiningUiState->buriedItems[1].buriedState = 0;
+    sMiningUiState->buriedItems[2].buriedState = 0;
+    sMiningUiState->buriedItems[3].buriedState = 0;
+
     // Always zone1 and zone4 have an item
     // TODO: Will change that because the user can always assume there is an item in those zones, 100 percently
-    sMiningUiState->state_item1 = SELECTED;
-    sMiningUiState->state_item4 = SELECTED;
+    sMiningUiState->buriedItems[0].isSelected = TRUE;
+    sMiningUiState->buriedItems[3].isSelected = TRUE;
 
     // Always two stones
-    sMiningUiState->state_stone1 = SELECTED;
-    sMiningUiState->state_stone2 = SELECTED;
+    sMiningUiState->buriedStones[0].isSelected = TRUE;
+    sMiningUiState->buriedStones[1].isSelected = TRUE;
 
     switch(Debug_SetNumberOfBuriedItems(random(3))) { // Debug
         case 0:
-            sMiningUiState->state_item3 = DESELECTED;
-            sMiningUiState->state_item2 = DESELECTED;
+            sMiningUiState->buriedItems[2].isSelected = FALSE;
+            sMiningUiState->buriedItems[1].isSelected = FALSE;
             break;
         case 1:
-            sMiningUiState->state_item3 = SELECTED;
-            sMiningUiState->state_item2 = DESELECTED;
+            sMiningUiState->buriedItems[2].isSelected = TRUE;
+            sMiningUiState->buriedItems[1].isSelected = FALSE;
             break;
         default:
         case 2:
-            sMiningUiState->state_item3 = SELECTED;
-            sMiningUiState->state_item2 = SELECTED;
+            sMiningUiState->buriedItems[2].isSelected = TRUE;
+            sMiningUiState->buriedItems[1].isSelected = TRUE;
             break;
     }
     SetMainCallback2(Mining_SetupCB);
@@ -2073,39 +2062,35 @@ static void Mining_LoadSpriteGraphics(void)
     ClearItemMap();
 
     // ITEMS
-    if (sMiningUiState->state_item1 == SELECTED) 
+    if (sMiningUiState->buriedItems[0].isSelected) 
     {
         itemId1 = GetRandomItemId();
         SetBuriedItemsId(0, itemId1);
         DoDrawRandomItem(1, itemId1);
-        sMiningUiState->Item1_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId1);
     }
-    if (sMiningUiState->state_item2 == SELECTED) 
+    if (sMiningUiState->buriedItems[1].isSelected) 
     {
         itemId2 = GetRandomItemId();
         SetBuriedItemsId(1, itemId2);
         DoDrawRandomItem(2, itemId2);
-        sMiningUiState->Item2_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId2);
     } else 
     {
         LoadSpritePalette(sSpritePal_Blank1);
     }
-    if (sMiningUiState->state_item3 == SELECTED) 
+    if (sMiningUiState->buriedItems[2].isSelected) 
     {
         itemId3 = GetRandomItemId();
         SetBuriedItemsId(2, itemId3);
         DoDrawRandomItem(3, itemId3);
-        sMiningUiState->Item3_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId3);
     } else 
     {
         LoadSpritePalette(sSpritePal_Blank2);
     }
-    if (sMiningUiState->state_item4 == SELECTED) 
+    if (sMiningUiState->buriedItems[3].isSelected) 
     {
         itemId4 = GetRandomItemId();
         SetBuriedItemsId(3, itemId4);
         DoDrawRandomItem(4, itemId4);
-        sMiningUiState->Item4_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId4);
     }
 
     for (i=0; i<COUNT_MAX_NUMBER_STONES; i++) 
@@ -2803,89 +2788,90 @@ static void DoDrawRandomStone(u8 itemId)
     OverwriteItemMapData(x, y, 6, itemId);
 }
 
+// TODO: This looks ugly and is badly written. Rewrite PLEASE >:(
 static void Mining_CheckItemFound(void) 
 {
     u8 full;
     u8 stop;
     u8 i;
 
-    full = sMiningUiState->Item1_TilesToDigUp;
+    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(0));
     stop = full+1;
 
-    if (sMiningUiState->state_item1 < full) 
+    if (sMiningUiState->buriedItems[0].buriedState < full && sMiningUiState->buriedItems[0].isSelected) 
     {
         for(i=0;i<96;i++) 
         {
             if(sMiningUiState->itemMap[i] == 1 && sMiningUiState->layerMap[i] == 6) 
             {
                 sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sMiningUiState->state_item1++;
+                sMiningUiState->buriedItems[0].buriedState++;
             }
         }
-    } else if (sMiningUiState->state_item1 == full) 
+    } else if (sMiningUiState->buriedItems[0].buriedState == full) 
     {
         BeginNormalPaletteFade(0x00040000, 2, 16, 0, RGB_WHITE);
-        sMiningUiState->state_item1 = stop;
+        sMiningUiState->buriedItems[0].buriedState = stop;
         SetBuriedItemStatus(0,TRUE);
     }
 
-    full = sMiningUiState->Item2_TilesToDigUp;
+    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(1));
     stop = full+1;
 
-    if (sMiningUiState->state_item2 < full) 
+    if (sMiningUiState->buriedItems[1].buriedState < full && sMiningUiState->buriedItems[1].isSelected) 
     {
         for(i=0;i<96;i++) 
         {
             if(sMiningUiState->itemMap[i] == 2 && sMiningUiState->layerMap[i] == 6) 
             {
                 sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sMiningUiState->state_item2++;
+                sMiningUiState->buriedItems[1].buriedState++;
             }
         }
-    } else if (sMiningUiState->state_item2 == full) 
+    } else if (sMiningUiState->buriedItems[1].buriedState == full) 
     {
         BeginNormalPaletteFade(0x00080000, 2, 16, 0, RGB_WHITE);
-        sMiningUiState->state_item2 = stop;
+        sMiningUiState->buriedItems[1].buriedState = stop;
         SetBuriedItemStatus(1,TRUE);
     }
 
-    full = sMiningUiState->Item3_TilesToDigUp;
+    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(2));
     stop = full+1;
 
-    if (sMiningUiState->state_item3 < full) 
+    if (sMiningUiState->buriedItems[2].buriedState < full && sMiningUiState->buriedItems[2].isSelected) 
     {
         for(i=0;i<96;i++) 
         {
             if(sMiningUiState->itemMap[i] == 3 && sMiningUiState->layerMap[i] == 6) 
             {
                 sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sMiningUiState->state_item3++;
+                sMiningUiState->buriedItems[2].buriedState++;
             }
         }
-    } else if (sMiningUiState->state_item3 == full) 
+    } else if (sMiningUiState->buriedItems[2].buriedState == full) 
     {
         BeginNormalPaletteFade(0x00100000, 2, 16, 0, RGB_WHITE);
-        sMiningUiState->state_item3 = stop;
+        sMiningUiState->buriedItems[2].buriedState = stop;
         SetBuriedItemStatus(2,TRUE);
     }
 
-    full = sMiningUiState->Item4_TilesToDigUp;
+    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(3));
     stop = full+1;
 
-    if (sMiningUiState->state_item4 < full) 
+    if (sMiningUiState->buriedItems[3].buriedState < full && sMiningUiState->buriedItems[3].isSelected) 
     {
         for(i=0;i<96;i++) 
         {
             if(sMiningUiState->itemMap[i] == 4 && sMiningUiState->layerMap[i] == 6) 
             {
                 sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sMiningUiState->state_item4++;
+                sMiningUiState->buriedItems[3].buriedState++;
             }
         }
-    } else if (sMiningUiState->state_item4 == full) 
+    } else if (sMiningUiState->buriedItems[3].buriedState == full) 
     {
         BeginNormalPaletteFade(0x00200000, 2, 16, 0, RGB_WHITE);
-        sMiningUiState->state_item4 = stop;
+        sMiningUiState->buriedItems[3].buriedState = stop;
         SetBuriedItemStatus(3,TRUE);
     }
 
@@ -3370,7 +3356,7 @@ static void Task_WaitButtonPressOpening(u8 taskId)
 static void Task_MiningPrintResult(u8 taskId) 
 {
     u32 itemIndex = ConvertLoadGameStateToItemIndex();
-    u32 itemId = GetBuriedItemId(itemIndex);
+    u32 itemId = GetBuriedBagItemId(itemIndex);
 
     if (gPaletteFade.active)
         return;
@@ -3534,14 +3520,6 @@ static void HandleGameFinish(u8 taskId)
 {
     MakeCursorInvisible();
 
-    // Ignore PSF
-    //
-    //SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_WIN0_ON);
-    //SetGpuReg(REG_OFFSET_WIN0H, WIN_RANGE(HWinCoords[0].winh.left, HWinCoords[0].winh.right));
-    //SetGpuReg(REG_OFFSET_WIN0V, WIN_RANGE(HWinCoords[0].winv.left, HWinCoords[0].winv.right));
-    //SetGpuReg(REG_OFFSET_WININ, WININ_WIN0_BG1);
-    //SetGpuReg(REG_OFFSET_WINOUT, WINOUT_WIN01_ALL);
-
     if (IsCrackMax()) 
     {
         // The Shake-Task creation is handled by Task_MiningUi_HandleMainInput
@@ -3569,7 +3547,7 @@ static u32 GetTotalNumberOfBuriedItems(void)
     u32 count = 0;
 
     for (itemIndex = 0; itemIndex < MAX_NUM_BURIED_ITEMS; itemIndex++)
-        if (GetBuriedItemId(itemIndex))
+        if (GetBuriedBagItemId(itemIndex))
             count++;
 
     return count;
@@ -3604,22 +3582,28 @@ static void InitBuriedItems(void)
 
 static void SetBuriedItemsId(u32 index, u32 itemId) 
 {
-    sMiningUiState->buriedItem[index].itemId = MiningItemList[itemId].realItemId;
+    sMiningUiState->buriedItems[index].bagItemId = MiningItemList[itemId].bagItemId;
+    sMiningUiState->buriedItems[index].miningItemId = MiningItemList[itemId].miningItemId;
 }
 
 static void SetBuriedItemStatus(u32 index, bool32 status) 
 {
-    sMiningUiState->buriedItem[index].status = status;
+    sMiningUiState->buriedItems[index].isDugUp = status;
 }
 
-static u32 GetBuriedItemId(u32 index) 
+static u32 GetBuriedBagItemId(u32 index) 
 {
-    return sMiningUiState->buriedItem[index].itemId;
+    return sMiningUiState->buriedItems[index].bagItemId;
+}
+
+static u32 GetBuriedMiningItemId(u32 index) 
+{
+    return sMiningUiState->buriedItems[index].miningItemId;
 }
 
 static bool32 GetBuriedItemStatus(u32 index) 
 {
-    return sMiningUiState->buriedItem[index].status;
+    return sMiningUiState->buriedItems[index].isDugUp;
 }
 
 static void ExitMiningUI(u8 taskId) 
