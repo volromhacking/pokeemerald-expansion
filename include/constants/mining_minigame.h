@@ -1,6 +1,6 @@
-#ifndef GUARD_EXCAVATION_CONSTANTS
+#ifndef GUARD_MINING_CONSTANTS
 
-#define GUARD_EXCAVATION_CONSTANTS
+#define GUARD_MINING_CONSTANTS
 
 #include "constants/items.h"
 #include "gba/types.h"

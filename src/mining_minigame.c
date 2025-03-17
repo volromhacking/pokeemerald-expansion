@@ -38,33 +38,33 @@
 void StartMining(void);
 
 /* >> Callbacks << */
-static void Excavation_Init(MainCallback callback);
-static void Excavation_SetupCB(void);
-static bool8 Excavation_InitBgs(void);
-static void Excavation_MainCB(void);
-static void Excavation_VBlankCB(void);
+static void Mining_Init(MainCallback callback);
+static void Mining_SetupCB(void);
+static bool8 Mining_InitBgs(void);
+static void Mining_MainCB(void);
+static void Mining_VBlankCB(void);
 
 /* >> Tasks << */
-static void Task_Excavation_WaitFadeAndBail(u8 taskId);
-static void Task_ExcavationWaitFadeIn(u8 taskId);
+static void Task_Mining_WaitFadeAndBail(u8 taskId);
+static void Task_MiningWaitFadeIn(u8 taskId);
 static void Task_WaitButtonPressOpening(u8 taskId);
-static void Task_ExcavationMainInput(u8 taskId);
-static void Task_ExcavationFadeAndExitMenu(u8 taskId);
-static void Task_ExcavationPrintResult(u8 taskId);
+static void Task_MiningMainInput(u8 taskId);
+static void Task_MiningFadeAndExitMenu(u8 taskId);
+static void Task_MiningPrintResult(u8 taskId);
 
 // >> Others <<
-static void Excavation_FadeAndBail(void);
-static bool8 Excavation_LoadBgGraphics(void);
-static void Excavation_LoadSpriteGraphics(void);
-static void Excavation_FreeResources(void);
-static void Excavation_UpdateCracks(void);
-static void Excavation_UpdateTerrain(void);
-static void Excavation_DrawRandomTerrain(void);
+static void Mining_FadeAndBail(void);
+static bool8 Mining_LoadBgGraphics(void);
+static void Mining_LoadSpriteGraphics(void);
+static void Mining_FreeResources(void);
+static void Mining_UpdateCracks(void);
+static void Mining_UpdateTerrain(void);
+static void Mining_DrawRandomTerrain(void);
 static void DoDrawRandomItem(u8 itemStateId, u8 itemId);
 static void DoDrawRandomStone(u8 itemId);
 static bool32 DoesStoneFitInItemMap(u8 itemId);
 static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId);
-static void Excavation_CheckItemFound(void);
+static void Mining_CheckItemFound(void);
 static void PrintMessage(const u8 *string);
 static void InitMiningWindows(void);
 static u32 GetCrackPosition(void);
@@ -84,7 +84,7 @@ static void SetBuriedItemStatus(u32 index, bool32 status);
 static u32 GetBuriedItemId(u32 index);
 static u32 GetNumberOfFoundItems(void);
 static bool32 GetBuriedItemStatus(u32 index);
-static void ExitExcavationUI(u8 taskId);
+static void ExitMiningUI(u8 taskId);
 static void WallCollapseAnimation();
 
 // >> Debug <<
@@ -102,7 +102,7 @@ struct BuriedItem
     bool32 status;
 };
 
-struct ExcavationState 
+struct MiningState 
 {
     MainCallback leavingCallback; // Callback to leave the Ui
     u32 loadGameState;            
@@ -180,8 +180,8 @@ struct ExcavationState
 #define TAG_HIT_HAMMER          12
 #define TAG_HIT_PICKAXE         13
 
-static EWRAM_DATA struct ExcavationState *sExcavationUiState = NULL;
-static EWRAM_DATA u8 *sBg1TilemapBuffer = NULL; // TODO: Add this to sExcavationUi struct (?)
+static EWRAM_DATA struct MiningState *sMiningUiState = NULL;
+static EWRAM_DATA u8 *sBg1TilemapBuffer = NULL; // TODO: Add this to sMiningUi struct (?)
 static EWRAM_DATA u8 *sBg2TilemapBuffer = NULL;
 static EWRAM_DATA u8 *sBg3TilemapBuffer = NULL;
 
@@ -204,7 +204,7 @@ static const struct WindowTemplate sWindowTemplates[] =
     DUMMY_WIN_TEMPLATE
 };
 
-static const struct BgTemplate sExcavationBgTemplates[] =
+static const struct BgTemplate sMiningBgTemplates[] =
 {
     // Text Box
     {
@@ -252,8 +252,8 @@ static const u32 gCracksAndTerrainTiles[] = INCBIN_U32("graphics/mining_minigame
 static const u32 gCracksAndTerrainTilemap[] = INCBIN_U32("graphics/mining_minigame/cracks_terrain.bin.lz");
 static const u16 gCracksAndTerrainPalette[] = INCBIN_U16("graphics/mining_minigame/cracks_terrain.gbapal");
 
-static const u8 gExcavationMessageBoxGfx[] = INCBIN_U8("graphics/mining_minigame/message_box.4bpp");
-static const u16 gExcavationMessageBoxPal[] = INCBIN_U16("graphics/mining_minigame/message_box.gbapal");
+static const u8 gMiningMessageBoxGfx[] = INCBIN_U8("graphics/mining_minigame/message_box.4bpp");
+static const u16 gMiningMessageBoxPal[] = INCBIN_U16("graphics/mining_minigame/message_box.gbapal");
 
 // Sprite data
 const u32 gCursorGfx[] = INCBIN_U32("graphics/pokenav/region_map/cursor_small.4bpp.lz");
@@ -502,8 +502,8 @@ static void SpriteCB_Cursor(struct Sprite* sprite)
     sprite->y = ReadComfyAnimValueSmooth(&gComfyAnims[sprite->data[COMFY_Y]]);
 
     // Update anim's X and Y pos
-    gComfyAnims[gSprites[sExcavationUiState->cursorSpriteIndex].data[COMFY_X]].config.data.spring.to = Q_24_8(8 + 16 * sExcavationUiState->cursorX);
-    gComfyAnims[gSprites[sExcavationUiState->cursorSpriteIndex].data[COMFY_Y]].config.data.spring.to = Q_24_8(8 + 16 * sExcavationUiState->cursorY);
+    gComfyAnims[gSprites[sMiningUiState->cursorSpriteIndex].data[COMFY_X]].config.data.spring.to = Q_24_8(8 + 16 * sMiningUiState->cursorX);
+    gComfyAnims[gSprites[sMiningUiState->cursorSpriteIndex].data[COMFY_Y]].config.data.spring.to = Q_24_8(8 + 16 * sMiningUiState->cursorY);
 }
 
 static const struct SpriteTemplate gSpriteCursor =
@@ -1086,7 +1086,7 @@ static const struct SpriteTemplate gSpriteStoneMushroom2 =
 };
 
 
-struct ExcavationItem 
+struct MiningItem 
 {
     u32 excItemId;
     u32 realItemId;
@@ -1098,7 +1098,7 @@ struct ExcavationItem
     const u16* paldata;
 };
 
-struct ExcavationStone 
+struct MiningStone 
 {
     u32 top; // starts with 0
     u32 left; // starts with 0
@@ -1107,7 +1107,7 @@ struct ExcavationStone
 };
 
 // TODO: Replace placeholder item IDs
-static const struct ExcavationItem ExcavationItemList[] =
+static const struct MiningItem MiningItemList[] =
 {
     [ITEMID_NONE] = 
     {
@@ -1412,7 +1412,7 @@ static const struct ExcavationItem ExcavationItemList[] =
     },
 };
 
-static const struct ExcavationStone ExcavationStoneList[] = 
+static const struct MiningStone MiningStoneList[] = 
 {
     [ID_STONE_1x4] = 
     {
@@ -1492,9 +1492,9 @@ static const u8 sText_WasObtained[] = _("{STR_VAR_1}\nwas obtained!");
 static const u8 sText_TooBad[] = _("Too bad!\nYour Bag is full!");
 static const u8 sText_TheWall[] = _("The wall collapsed!");
 
-static u32 ExcavationUtil_GetTotalTileAmount(u8 itemId) 
+static u32 MiningUtil_GetTotalTileAmount(u8 itemId) 
 {
-    return ExcavationItemList[itemId].totalTiles + 1;
+    return MiningItemList[itemId].totalTiles + 1;
 }
 
 // Creates a random number between 0 and amount-1
@@ -1505,53 +1505,53 @@ static u32 random(u32 amount)
 
 void StartMining(void) 
 {
-    Excavation_Init(CB2_ReturnToField);
+    Mining_Init(CB2_ReturnToField);
 }
 
-static void Excavation_Init(MainCallback callback) 
+static void Mining_Init(MainCallback callback) 
 {
-    sExcavationUiState = AllocZeroed(sizeof(struct ExcavationState));
+    sMiningUiState = AllocZeroed(sizeof(struct MiningState));
 
-    if (sExcavationUiState == NULL) 
+    if (sMiningUiState == NULL) 
     {
         SetMainCallback2(callback);
         return;
     }
 
-    sExcavationUiState->leavingCallback = callback;
-    sExcavationUiState->shakeState = 0;
-    sExcavationUiState->shouldShake = FALSE;
-    sExcavationUiState->isCollapseAnimActive = FALSE;
-    sExcavationUiState->shakeDuration = 0;
-    sExcavationUiState->loadGameState = 0;
-    sExcavationUiState->stressLevelCount = 0;
-    sExcavationUiState->stressLevelPos = 0;
+    sMiningUiState->leavingCallback = callback;
+    sMiningUiState->shakeState = 0;
+    sMiningUiState->shouldShake = FALSE;
+    sMiningUiState->isCollapseAnimActive = FALSE;
+    sMiningUiState->shakeDuration = 0;
+    sMiningUiState->loadGameState = 0;
+    sMiningUiState->stressLevelCount = 0;
+    sMiningUiState->stressLevelPos = 0;
 
     // Always zone1 and zone4 have an item
     // TODO: Will change that because the user can always assume there is an item in those zones, 100 percently
-    sExcavationUiState->state_item1 = SELECTED;
-    sExcavationUiState->state_item4 = SELECTED;
+    sMiningUiState->state_item1 = SELECTED;
+    sMiningUiState->state_item4 = SELECTED;
 
     // Always two stones
-    sExcavationUiState->state_stone1 = SELECTED;
-    sExcavationUiState->state_stone2 = SELECTED;
+    sMiningUiState->state_stone1 = SELECTED;
+    sMiningUiState->state_stone2 = SELECTED;
 
     switch(Debug_SetNumberOfBuriedItems(random(3))) { // Debug
         case 0:
-            sExcavationUiState->state_item3 = DESELECTED;
-            sExcavationUiState->state_item2 = DESELECTED;
+            sMiningUiState->state_item3 = DESELECTED;
+            sMiningUiState->state_item2 = DESELECTED;
             break;
         case 1:
-            sExcavationUiState->state_item3 = SELECTED;
-            sExcavationUiState->state_item2 = DESELECTED;
+            sMiningUiState->state_item3 = SELECTED;
+            sMiningUiState->state_item2 = DESELECTED;
             break;
         default:
         case 2:
-            sExcavationUiState->state_item3 = SELECTED;
-            sExcavationUiState->state_item2 = SELECTED;
+            sMiningUiState->state_item3 = SELECTED;
+            sMiningUiState->state_item2 = SELECTED;
             break;
     }
-    SetMainCallback2(Excavation_SetupCB);
+    SetMainCallback2(Mining_SetupCB);
 }
 
 enum 
@@ -1598,17 +1598,7 @@ enum
     CRACK_POS_MAX,
 };
 
-static void DestroyAllSprites() 
-{
-    u32 i;
-
-    for (i=0;i<MAX_SPRITES;i++)       
-    {
-        DestroySpriteAndFreeResources(&gSprites[i]);
-    }
-}
-
-static void Excavation_SetupCB(void) 
+static void Mining_SetupCB(void) 
 {
     switch(gMain.state) 
     {
@@ -1632,19 +1622,19 @@ static void Excavation_SetupCB(void)
             break;
 
         case STATE_INIT_BGS:
-            if (Excavation_InitBgs() == TRUE) 
+            if (Mining_InitBgs() == TRUE) 
             {
-                sExcavationUiState->loadGameState = 0;
+                sMiningUiState->loadGameState = 0;
             } else 
             {
-                Excavation_FadeAndBail();
+                Mining_FadeAndBail();
                 return;
             }
             gMain.state++;
             break;
 
         case STATE_LOAD_BGS:
-            if (Excavation_LoadBgGraphics() == TRUE) 
+            if (Mining_LoadBgGraphics() == TRUE) 
             {
                 InitMiningWindows();
                 gMain.state++;
@@ -1655,13 +1645,13 @@ static void Excavation_SetupCB(void)
             if (!gPaletteFade.active) 
             {
                 InitBuriedItems();
-                Excavation_LoadSpriteGraphics();            
+                Mining_LoadSpriteGraphics();            
                 gMain.state++;
             }
             break;
 
         case STATE_WAIT_FADE:
-            CreateTask(Task_ExcavationWaitFadeIn, 0);
+            CreateTask(Task_MiningWaitFadeIn, 0);
             gMain.state++;
             break;
 
@@ -1671,13 +1661,13 @@ static void Excavation_SetupCB(void)
             break;
 
         case STATE_SET_CALLBACKS:
-            SetVBlankCallback(Excavation_VBlankCB);
-            SetMainCallback2(Excavation_MainCB);
+            SetVBlankCallback(Mining_VBlankCB);
+            SetMainCallback2(Mining_MainCB);
             break;
     }
 }
 
-static bool8 Excavation_InitBgs(void) 
+static bool8 Mining_InitBgs(void) 
 {
     const u32 TILEMAP_BUFFER_SIZE = (1024 * 2);
 
@@ -1699,7 +1689,7 @@ static bool8 Excavation_InitBgs(void)
 
     ResetBgsAndClearDma3BusyFlags(0);
 
-    InitBgsFromTemplates(0, sExcavationBgTemplates, NELEMS(sExcavationBgTemplates));
+    InitBgsFromTemplates(0, sMiningBgTemplates, NELEMS(sMiningBgTemplates));
 
     SetBgTilemapBuffer(1, sBg1TilemapBuffer);
     SetBgTilemapBuffer(2, sBg2TilemapBuffer);
@@ -1716,18 +1706,18 @@ static bool8 Excavation_InitBgs(void)
     return TRUE;
 }
 
-static void Task_Excavation_WaitFadeAndBail(u8 taskId) 
+static void Task_Mining_WaitFadeAndBail(u8 taskId) 
 {
     if (!gPaletteFade.active)
 
     {
-        SetMainCallback2(sExcavationUiState->leavingCallback);
-        Excavation_FreeResources();
+        SetMainCallback2(sMiningUiState->leavingCallback);
+        Mining_FreeResources();
         DestroyTask(taskId);
     }
 }
 
-static void Excavation_MainCB(void) 
+static void Mining_MainCB(void) 
 {
     RunTasks();
     AdvanceComfyAnimations();
@@ -1740,7 +1730,7 @@ static void ShakeSprite(s16 dx, s16 dy)
 {
     u32 i;
 
-    if (sExcavationUiState->toggleShakeDuringAnimation == FALSE) 
+    if (sMiningUiState->toggleShakeDuringAnimation == FALSE) 
     {
         for (i=0;i<MAX_SPRITES;i++) 
         {
@@ -1750,150 +1740,150 @@ static void ShakeSprite(s16 dx, s16 dy)
     }
 }
 
-static void ExcavationUi_Shake(u8 taskId) 
+static void MiningUi_Shake(u8 taskId) 
 {
-    switch(sExcavationUiState->shakeState) 
+    switch(sMiningUiState->shakeState) 
     {
         case 0: // Left 1 - Down 1
             MakeCursorInvisible();
             if (!IsCrackMax() && Random() % 100 < 20) { // 20 % chance of not shaking the screen
-                sExcavationUiState->toggleShakeDuringAnimation = TRUE;  
+                sMiningUiState->toggleShakeDuringAnimation = TRUE;  
             }
             ShakeSprite(-1, 1);
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
         case 1:
-            if (sExcavationUiState->toggleShakeDuringAnimation == FALSE) 
+            if (sMiningUiState->toggleShakeDuringAnimation == FALSE) 
             {
                 SetGpuReg(REG_OFFSET_BG3HOFS, 1);
                 SetGpuReg(REG_OFFSET_BG2HOFS, 1);
                 SetGpuReg(REG_OFFSET_BG3VOFS, -1);
                 SetGpuReg(REG_OFFSET_BG2VOFS, -1);
             }
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
         case 3: // Right 2 - Up 2
             ShakeSprite(3, -3);
-            gSprites[sExcavationUiState->ShakeHitEffect].invisible = 1;
-            gSprites[sExcavationUiState->ShakeHitTool].invisible = 1;
-            sExcavationUiState->shakeState++;
+            gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
+            gSprites[sMiningUiState->ShakeHitTool].invisible = 1;
+            sMiningUiState->shakeState++;
             break;
         case 4:
-            if (sExcavationUiState->toggleShakeDuringAnimation == FALSE) 
+            if (sMiningUiState->toggleShakeDuringAnimation == FALSE) 
             {
                 SetGpuReg(REG_OFFSET_BG3HOFS, -2);
                 SetGpuReg(REG_OFFSET_BG2HOFS, -2);
                 SetGpuReg(REG_OFFSET_BG3VOFS, 2);
                 SetGpuReg(REG_OFFSET_BG2VOFS, 2);
             }
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
         case 6: // Down 2
             ShakeSprite(-2, 4);
             if (!IsCrackMax()) 
             {
-                gSprites[sExcavationUiState->ShakeHitEffect].invisible = 0;
-                gSprites[sExcavationUiState->ShakeHitTool].invisible = 0;
+                gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
+                gSprites[sMiningUiState->ShakeHitTool].invisible = 0;
             }
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
         case 7:
-            if (sExcavationUiState->toggleShakeDuringAnimation == FALSE) 
+            if (sMiningUiState->toggleShakeDuringAnimation == FALSE) 
             {
                 SetGpuReg(REG_OFFSET_BG3VOFS, -2);
                 SetGpuReg(REG_OFFSET_BG2VOFS, -2);
                 SetGpuReg(REG_OFFSET_BG3HOFS, 0);
                 SetGpuReg(REG_OFFSET_BG2HOFS, 0);
             }
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
         case 9: // Left 2 - Up 2
             ShakeSprite(-2, -4);
-            gSprites[sExcavationUiState->ShakeHitEffect].invisible = 1;
-            sExcavationUiState->shakeState++;
+            gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
+            sMiningUiState->shakeState++;
             break;
         case 10:     
-            if (sExcavationUiState->toggleShakeDuringAnimation == FALSE) 
+            if (sMiningUiState->toggleShakeDuringAnimation == FALSE) 
             {
                 SetGpuReg(REG_OFFSET_BG2HOFS, 2);
                 SetGpuReg(REG_OFFSET_BG3HOFS, 2);
                 SetGpuReg(REG_OFFSET_BG3VOFS, 2);
                 SetGpuReg(REG_OFFSET_BG2VOFS, 2);
             }
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
         case 12: // Right 1 - Down 1
             ShakeSprite(3, 3);
             if (!IsCrackMax()) 
             {
-                gSprites[sExcavationUiState->ShakeHitEffect].invisible = 0;
+                gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
             }
-            gSprites[sExcavationUiState->ShakeHitTool].x += 7;
-            StartSpriteAnim(&gSprites[sExcavationUiState->ShakeHitTool], 1);
-            sExcavationUiState->shakeState++;
+            gSprites[sMiningUiState->ShakeHitTool].x += 7;
+            StartSpriteAnim(&gSprites[sMiningUiState->ShakeHitTool], 1);
+            sMiningUiState->shakeState++;
             break;
         case 13: 
-            if (sExcavationUiState->toggleShakeDuringAnimation == FALSE) 
+            if (sMiningUiState->toggleShakeDuringAnimation == FALSE) 
             {
                 SetGpuReg(REG_OFFSET_BG3HOFS, -1);
                 SetGpuReg(REG_OFFSET_BG2HOFS, -1);
                 SetGpuReg(REG_OFFSET_BG3VOFS, -1);
                 SetGpuReg(REG_OFFSET_BG2VOFS, -1);
             }
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
         case 15:
             ShakeSprite(-1, -1);
             //if (!IsCrackMax())
-            //  gSprites[sExcavationUiState->cursorSpriteIndex].invisible = 0;
-            sExcavationUiState->shakeState++;
+            //  gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
+            sMiningUiState->shakeState++;
             break;
         case 16:
             SetGpuReg(REG_OFFSET_BG3VOFS, 0);
             SetGpuReg(REG_OFFSET_BG3HOFS, 0);
             SetGpuReg(REG_OFFSET_BG2HOFS, 0);
             SetGpuReg(REG_OFFSET_BG2VOFS, 0);
-            DestroySprite(&gSprites[sExcavationUiState->ShakeHitTool]);
-            DestroySprite(&gSprites[sExcavationUiState->ShakeHitEffect]);
-            if (sExcavationUiState->shakeDuration > 0) 
+            DestroySprite(&gSprites[sMiningUiState->ShakeHitTool]);
+            DestroySprite(&gSprites[sMiningUiState->ShakeHitEffect]);
+            if (sMiningUiState->shakeDuration > 0) 
             {
-                sExcavationUiState->shakeDuration--;
-                sExcavationUiState->shakeState = 0;
-                sExcavationUiState->toggleShakeDuringAnimation = FALSE;
+                sMiningUiState->shakeDuration--;
+                sMiningUiState->shakeState = 0;
+                sMiningUiState->toggleShakeDuringAnimation = FALSE;
                 break;
             }
             if (IsCrackMax()) 
             {
                 WallCollapseAnimation();
             } 
-            gSprites[sExcavationUiState->cursorSpriteIndex].invisible = 0;
-            sExcavationUiState->shakeState = 0;
-            sExcavationUiState->shouldShake = FALSE;
-            sExcavationUiState->toggleShakeDuringAnimation = FALSE;
+            gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
+            sMiningUiState->shakeState = 0;
+            sMiningUiState->shouldShake = FALSE;
+            sMiningUiState->toggleShakeDuringAnimation = FALSE;
             DestroyTask(taskId);
             break;
         default:
-            sExcavationUiState->shakeState++;
+            sMiningUiState->shakeState++;
             break;
     }
     BuildOamBuffer();
 }
 
-static void Excavation_VBlankCB(void) 
+static void Mining_VBlankCB(void) 
 {
-    Excavation_CheckItemFound();
+    Mining_CheckItemFound();
     UpdatePaletteFade();
     LoadOam();
     ProcessSpriteCopyRequests();
     TransferPlttBuffer();
 }
 
-static void Excavation_FadeAndBail(void) 
+static void Mining_FadeAndBail(void) 
 {
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
-    CreateTask(Task_Excavation_WaitFadeAndBail, 0);
-    SetVBlankCallback(Excavation_VBlankCB);
-    SetMainCallback2(Excavation_MainCB);
+    CreateTask(Task_Mining_WaitFadeAndBail, 0);
+    SetVBlankCallback(Mining_VBlankCB);
+    SetMainCallback2(Mining_MainCB);
 }
 
 
@@ -1907,18 +1897,18 @@ static void OverwriteTileDataInTilemapBuffer(u8 tile, u8 x, u8 y, u16* tilemapBu
 }
 
 
-static bool8 Excavation_LoadBgGraphics(void) 
+static bool8 Mining_LoadBgGraphics(void) 
 {
     u32 i, j;
     u16* tilemapBuf = GetBgTilemapBuffer(1);
-    switch (sExcavationUiState->loadGameState) 
+    switch (sMiningUiState->loadGameState) 
     {
         case 0:
             ResetTempTileDataBuffers();
             DecompressAndCopyTileDataToVram(1, sCollapseScreenTiles, 0, 0, 0);
             DecompressAndCopyTileDataToVram(2, gCracksAndTerrainTiles, 0, 0, 0);
             DecompressAndCopyTileDataToVram(3, sUiTiles, 0, 0, 0);
-            sExcavationUiState->loadGameState++;
+            sMiningUiState->loadGameState++;
             break;
         case 1:
             if (FreeTempTileDataBuffersIfPossible() != TRUE) 
@@ -1934,19 +1924,19 @@ static bool8 Excavation_LoadBgGraphics(void)
 
                 LZDecompressWram(gCracksAndTerrainTilemap, sBg2TilemapBuffer);
                 LZDecompressWram(sUiTilemap, sBg3TilemapBuffer);
-                sExcavationUiState->loadGameState++;
+                sMiningUiState->loadGameState++;
             }
             break;
         case 2:
             LoadPalette(sCollapseScreenPalette, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
             LoadPalette(gCracksAndTerrainPalette, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
             LoadPalette(sUiPalette, BG_PLTT_ID(0), PLTT_SIZE_4BPP);
-            sExcavationUiState->loadGameState++;
+            sMiningUiState->loadGameState++;
         case 3:
-            Excavation_DrawRandomTerrain();
-            sExcavationUiState->loadGameState++;
+            Mining_DrawRandomTerrain();
+            sMiningUiState->loadGameState++;
         default:
-            sExcavationUiState->loadGameState = STATE_GAME_START;
+            sMiningUiState->loadGameState = STATE_GAME_START;
             return TRUE;
     }
     return FALSE;
@@ -1958,7 +1948,7 @@ static void ClearItemMap(void)
 
     for (i=0; i < 96; i++) 
     {
-        sExcavationUiState->itemMap[i] = ITEM_TILE_NONE;
+        sMiningUiState->itemMap[i] = ITEM_TILE_NONE;
     }
 }
 
@@ -2049,7 +2039,7 @@ static u8 GetRandomItemId()
 }
 
 
-static void Excavation_LoadSpriteGraphics(void) 
+static void Mining_LoadSpriteGraphics(void) 
 {
     u32 i;
     u8 itemId1, itemId2, itemId3, itemId4;
@@ -2083,39 +2073,39 @@ static void Excavation_LoadSpriteGraphics(void)
     ClearItemMap();
 
     // ITEMS
-    if (sExcavationUiState->state_item1 == SELECTED) 
+    if (sMiningUiState->state_item1 == SELECTED) 
     {
         itemId1 = GetRandomItemId();
         SetBuriedItemsId(0, itemId1);
         DoDrawRandomItem(1, itemId1);
-        sExcavationUiState->Item1_TilesToDigUp = ExcavationUtil_GetTotalTileAmount(itemId1);
+        sMiningUiState->Item1_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId1);
     }
-    if (sExcavationUiState->state_item2 == SELECTED) 
+    if (sMiningUiState->state_item2 == SELECTED) 
     {
         itemId2 = GetRandomItemId();
         SetBuriedItemsId(1, itemId2);
         DoDrawRandomItem(2, itemId2);
-        sExcavationUiState->Item2_TilesToDigUp = ExcavationUtil_GetTotalTileAmount(itemId2);
+        sMiningUiState->Item2_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId2);
     } else 
     {
         LoadSpritePalette(sSpritePal_Blank1);
     }
-    if (sExcavationUiState->state_item3 == SELECTED) 
+    if (sMiningUiState->state_item3 == SELECTED) 
     {
         itemId3 = GetRandomItemId();
         SetBuriedItemsId(2, itemId3);
         DoDrawRandomItem(3, itemId3);
-        sExcavationUiState->Item3_TilesToDigUp = ExcavationUtil_GetTotalTileAmount(itemId3);
+        sMiningUiState->Item3_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId3);
     } else 
     {
         LoadSpritePalette(sSpritePal_Blank2);
     }
-    if (sExcavationUiState->state_item4 == SELECTED) 
+    if (sMiningUiState->state_item4 == SELECTED) 
     {
         itemId4 = GetRandomItemId();
         SetBuriedItemsId(3, itemId4);
         DoDrawRandomItem(4, itemId4);
-        sExcavationUiState->Item4_TilesToDigUp = ExcavationUtil_GetTotalTileAmount(itemId4);
+        sMiningUiState->Item4_TilesToDigUp = MiningUtil_GetTotalTileAmount(itemId4);
     }
 
     for (i=0; i<COUNT_MAX_NUMBER_STONES; i++) 
@@ -2133,15 +2123,15 @@ static void Excavation_LoadSpriteGraphics(void)
 
     }
 
-    sExcavationUiState->cursorSpriteIndex = CreateSprite(&gSpriteCursor, 8, 40, 0);
-    sExcavationUiState->cursorX = 0;
-    sExcavationUiState->cursorY = 2;
-    gSprites[sExcavationUiState->cursorSpriteIndex].data[COMFY_X] = CreateComfyAnim_Spring(&animConfigX);
-    gSprites[sExcavationUiState->cursorSpriteIndex].data[COMFY_Y] = CreateComfyAnim_Spring(&animConfigY);
+    sMiningUiState->cursorSpriteIndex = CreateSprite(&gSpriteCursor, 8, 40, 0);
+    sMiningUiState->cursorX = 0;
+    sMiningUiState->cursorY = 2;
+    gSprites[sMiningUiState->cursorSpriteIndex].data[COMFY_X] = CreateComfyAnim_Spring(&animConfigX);
+    gSprites[sMiningUiState->cursorSpriteIndex].data[COMFY_Y] = CreateComfyAnim_Spring(&animConfigY);
 
-    sExcavationUiState->bRedSpriteIndex = CreateSprite(&gSpriteButtonRed, 217,78,0);
-    sExcavationUiState->bBlueSpriteIndex = CreateSprite(&gSpriteButtonBlue, 217,138,1);
-    sExcavationUiState->tool = 0;
+    sMiningUiState->bRedSpriteIndex = CreateSprite(&gSpriteButtonRed, 217,78,0);
+    sMiningUiState->bBlueSpriteIndex = CreateSprite(&gSpriteButtonBlue, 217,138,1);
+    sMiningUiState->tool = 0;
     LoadSpritePalette(sSpritePal_HitEffect);
     LoadCompressedSpriteSheet(sSpriteSheet_HitEffectHammer);
     LoadCompressedSpriteSheet(sSpriteSheet_HitEffectPickaxe);
@@ -2149,7 +2139,7 @@ static void Excavation_LoadSpriteGraphics(void)
     LoadCompressedSpriteSheet(sSpriteSheet_HitPickaxe);
 }
 
-static void Task_ExcavationWaitFadeIn(u8 taskId) 
+static void Task_MiningWaitFadeIn(u8 taskId) 
 {
     if (!gPaletteFade.active) 
     {
@@ -2160,57 +2150,57 @@ static void Task_ExcavationWaitFadeIn(u8 taskId)
     }
 }
 
-#define CURSOR_SPRITE gSprites[sExcavationUiState->cursorSpriteIndex]
+#define CURSOR_SPRITE gSprites[sMiningUiState->cursorSpriteIndex]
 #define BLUE_BUTTON 0
 #define RED_BUTTON 1
 
-static void Task_ExcavationMainInput(u8 taskId) 
+static void Task_MiningMainInput(u8 taskId) 
 {
-    if (gMain.newKeys & A_BUTTON && !sExcavationUiState->shouldShake)  
+    if (gMain.newKeys & A_BUTTON && !sMiningUiState->shouldShake)  
     {
-        Excavation_UpdateTerrain();
-        Excavation_UpdateCracks();
+        Mining_UpdateTerrain();
+        Mining_UpdateCracks();
         ScheduleBgCopyTilemapToVram(2);
         DoScheduledBgTilemapCopiesToVram();
         BuildOamBuffer();
 
-        if (sExcavationUiState->tool == 1) 
+        if (sMiningUiState->tool == 1) 
         {
-            sExcavationUiState->ShakeHitEffect = CreateSprite(&gSpriteHitEffectHammer, (sExcavationUiState->cursorX*16)+8, (sExcavationUiState->cursorY*16)+8, 0);
-            sExcavationUiState->ShakeHitTool = CreateSprite(&gSpriteHitHammer, (sExcavationUiState->cursorX*16)+24, sExcavationUiState->cursorY*16, 0);
+            sMiningUiState->ShakeHitEffect = CreateSprite(&gSpriteHitEffectHammer, (sMiningUiState->cursorX*16)+8, (sMiningUiState->cursorY*16)+8, 0);
+            sMiningUiState->ShakeHitTool = CreateSprite(&gSpriteHitHammer, (sMiningUiState->cursorX*16)+24, sMiningUiState->cursorY*16, 0);
         } else 
         {
-            sExcavationUiState->ShakeHitEffect = CreateSprite(&gSpriteHitEffectPickaxe, (sExcavationUiState->cursorX*16)+8, (sExcavationUiState->cursorY*16)+8, 0);
-            sExcavationUiState->ShakeHitTool = CreateSprite(&gSpriteHitPickaxe, (sExcavationUiState->cursorX*16)+24, sExcavationUiState->cursorY*16, 0);
+            sMiningUiState->ShakeHitEffect = CreateSprite(&gSpriteHitEffectPickaxe, (sMiningUiState->cursorX*16)+8, (sMiningUiState->cursorY*16)+8, 0);
+            sMiningUiState->ShakeHitTool = CreateSprite(&gSpriteHitPickaxe, (sMiningUiState->cursorX*16)+24, sMiningUiState->cursorY*16, 0);
         }
-        sExcavationUiState->shouldShake = TRUE;
-        CreateTask(ExcavationUi_Shake, 0);
+        sMiningUiState->shouldShake = TRUE;
+        CreateTask(MiningUi_Shake, 0);
     }
 
-    else if (gMain.newAndRepeatedKeys & DPAD_LEFT && sExcavationUiState->cursorX > 0) 
+    else if (gMain.newAndRepeatedKeys & DPAD_LEFT && sMiningUiState->cursorX > 0) 
     {
-        sExcavationUiState->cursorX -= 1;
-    } else if (gMain.newAndRepeatedKeys & DPAD_RIGHT && sExcavationUiState->cursorX < 11) 
+        sMiningUiState->cursorX -= 1;
+    } else if (gMain.newAndRepeatedKeys & DPAD_RIGHT && sMiningUiState->cursorX < 11) 
     {
-        sExcavationUiState->cursorX += 1;
-    } else if (gMain.newAndRepeatedKeys & DPAD_UP && sExcavationUiState->cursorY > 2) 
+        sMiningUiState->cursorX += 1;
+    } else if (gMain.newAndRepeatedKeys & DPAD_UP && sMiningUiState->cursorY > 2) 
     {
-        sExcavationUiState->cursorY -= 1;
-    } else if (gMain.newAndRepeatedKeys & DPAD_DOWN && sExcavationUiState->cursorY < 9) 
+        sMiningUiState->cursorY -= 1;
+    } else if (gMain.newAndRepeatedKeys & DPAD_DOWN && sMiningUiState->cursorY < 9) 
     {
-        sExcavationUiState->cursorY += 1;
+        sMiningUiState->cursorY += 1;
     }
 
     else if (gMain.newAndRepeatedKeys & R_BUTTON) 
     {
-        StartSpriteAnim(&gSprites[sExcavationUiState->bRedSpriteIndex], 1);
-        StartSpriteAnim(&gSprites[sExcavationUiState->bBlueSpriteIndex],1);
-        sExcavationUiState->tool = RED_BUTTON;
+        StartSpriteAnim(&gSprites[sMiningUiState->bRedSpriteIndex], 1);
+        StartSpriteAnim(&gSprites[sMiningUiState->bBlueSpriteIndex],1);
+        sMiningUiState->tool = RED_BUTTON;
     } else if (gMain.newAndRepeatedKeys & L_BUTTON) 
     {
-        StartSpriteAnim(&gSprites[sExcavationUiState->bRedSpriteIndex], 0);
-        StartSpriteAnim(&gSprites[sExcavationUiState->bBlueSpriteIndex], 0);
-        sExcavationUiState->tool = BLUE_BUTTON;
+        StartSpriteAnim(&gSprites[sMiningUiState->bRedSpriteIndex], 0);
+        StartSpriteAnim(&gSprites[sMiningUiState->bBlueSpriteIndex], 0);
+        sMiningUiState->tool = BLUE_BUTTON;
     }
 
     if (AreAllItemsFound())
@@ -2352,55 +2342,55 @@ static void Crack_DrawCrack_6(u8 ofs, u8 ofs2, u16* ptr)
 // DO NOT TOUCH ANY OF THE CRACK UPDATE FUNCTIONS!!!!! GENERATION IS TOO COMPLICATED TO GET FIXED!
 static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr) 
 {
-    switch (sExcavationUiState->stressLevelCount) 
+    switch (sMiningUiState->stressLevelCount) 
     {
         case 0:
             Crack_DrawCrack_0(offsetIn8, ofs2, ptr);
-            if (sExcavationUiState->tool == 1) 
+            if (sMiningUiState->tool == 1) 
             {
-                sExcavationUiState->stressLevelCount++;
+                sMiningUiState->stressLevelCount++;
             }
-            sExcavationUiState->stressLevelCount++;
+            sMiningUiState->stressLevelCount++;
             break;
         case 1:
             Crack_DrawCrack_1(offsetIn8, ofs2, ptr);
-            if (sExcavationUiState->tool == 1) 
+            if (sMiningUiState->tool == 1) 
             {
-                sExcavationUiState->stressLevelCount++;
+                sMiningUiState->stressLevelCount++;
             }
-            sExcavationUiState->stressLevelCount++;
+            sMiningUiState->stressLevelCount++;
             break;
         case 2:
             Crack_DrawCrack_2(offsetIn8, ofs2, ptr);
-            if (sExcavationUiState->tool == 1) 
+            if (sMiningUiState->tool == 1) 
             {
-                sExcavationUiState->stressLevelCount++;
+                sMiningUiState->stressLevelCount++;
             }
-            sExcavationUiState->stressLevelCount++;
+            sMiningUiState->stressLevelCount++;
             break;
         case 3:
             Crack_DrawCrack_3(offsetIn8, ofs2, ptr);
-            if (sExcavationUiState->tool == 1) 
+            if (sMiningUiState->tool == 1) 
             {
-                sExcavationUiState->stressLevelCount++;
+                sMiningUiState->stressLevelCount++;
             }
-            sExcavationUiState->stressLevelCount++;
+            sMiningUiState->stressLevelCount++;
             break;
         case 4:
             Crack_DrawCrack_4(offsetIn8, ofs2, ptr);
-            if (sExcavationUiState->tool == 1) 
+            if (sMiningUiState->tool == 1) 
             {
-                sExcavationUiState->stressLevelCount++;
+                sMiningUiState->stressLevelCount++;
             }
-            sExcavationUiState->stressLevelCount++;
+            sMiningUiState->stressLevelCount++;
             break;
         case 5:
             Crack_DrawCrack_5(offsetIn8, ofs2, ptr);
-            sExcavationUiState->stressLevelCount++;
+            sMiningUiState->stressLevelCount++;
             break;
         case 6:
             Crack_DrawCrack_6(offsetIn8, ofs2, ptr);
-            if (sExcavationUiState->stressLevelPos == 7) 
+            if (sMiningUiState->stressLevelPos == 7) 
             {
                 OverwriteTileDataInTilemapBuffer(0x00, 18 - offsetIn8 * 4 + ofs2, 1, ptr, 0x01);
                 OverwriteTileDataInTilemapBuffer(0x00, 19 - offsetIn8 * 4 + ofs2, 1, ptr, 0x01);
@@ -2409,17 +2399,17 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
                 OverwriteTileDataInTilemapBuffer(0x00, 20 - offsetIn8 * 4 + ofs2, 2, ptr, 0x01);
                 OverwriteTileDataInTilemapBuffer(0x00, 20 - offsetIn8 * 4 + ofs2, 3, ptr, 0x01);
             }
-            sExcavationUiState->stressLevelCount = 1;
-            sExcavationUiState->stressLevelPos++;
+            sMiningUiState->stressLevelCount = 1;
+            sMiningUiState->stressLevelPos++;
             break;
     }
 }
 
 // DO NOT TOUCH ANY OF THE CRACK UPDATE FUNCTIONS!!!!! GENERATION IS TOO COMPLICATED TO GET FIXED!
-static void Excavation_UpdateCracks(void) 
+static void Mining_UpdateCracks(void) 
 {
     u16 *ptr = GetBgTilemapBuffer(2);
-    switch (sExcavationUiState->stressLevelPos) 
+    switch (sMiningUiState->stressLevelPos) 
     {
         case 0:
             Crack_UpdateCracksRelativeToCrackPos(0, 0, ptr);
@@ -2509,7 +2499,7 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
     struct SpriteTemplate TempSpriteTemplate = gDummySpriteTemplate;
 
     TempPalette.tag = PalTag;
-    TempPalette.data = (u16 *)ExcavationItemList[itemId].paldata;
+    TempPalette.data = (u16 *)MiningItemList[itemId].paldata;
     LoadSpritePalette(&TempPalette);
 
     TempSpriteTemplate.tileTag = TileTag;
@@ -2604,8 +2594,8 @@ static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag)
             spriteId = CreateSprite(&gSpriteStoneMushroom2, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
         default: // If Item and not Stone
-            gSpriteTemplate = CreatePaletteAndReturnTemplate(ExcavationItemList[itemId].tag, itemNumPalTag, itemId);
-            LoadCompressedSpriteSheet(ExcavationItemList[itemId].sheet);
+            gSpriteTemplate = CreatePaletteAndReturnTemplate(MiningItemList[itemId].tag, itemNumPalTag, itemId);
+            LoadCompressedSpriteSheet(MiningItemList[itemId].sheet);
             spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
     }
@@ -2616,7 +2606,7 @@ static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag)
 // Defines && Macros
 static void SetItemState(u32 posX, u32 posY, u32 x, u32 y, u32 itemStateId) 
 {
-    sExcavationUiState->itemMap[posX + x + (posY + y) * 12] = itemStateId;
+    sMiningUiState->itemMap[posX + x + (posY + y) * 12] = itemStateId;
 }
 
 static void OverwriteItemMapData(u8 posX, u8 posY, u8 itemStateId, u8 itemId) 
@@ -2634,8 +2624,8 @@ static void OverwriteItemMapData(u8 posX, u8 posY, u8 itemStateId, u8 itemId)
 }
 
 // Defines && Macros
-#define BORDERCHECK_COND(itemId) posX + ExcavationItemList[(itemId)].left > xBorder || \
-    posY + ExcavationItemList[(itemId)].top > yBorder
+#define BORDERCHECK_COND(itemId) posX + MiningItemList[(itemId)].left > xBorder || \
+    posY + MiningItemList[(itemId)].top > yBorder
 #define IGNORE_COORDS 255
 
 // This function is used to determine wether an item should be placed or not.
@@ -2725,7 +2715,7 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
 
             Debug_DetermineLocation(&x,&y,itemStateId); // Debug
 
-            if (ExcavationItemList[(itemId)].top == 3) 
+            if (MiningItemList[(itemId)].top == 3) 
             {
                 y=yMin;
             }
@@ -2753,8 +2743,8 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
 static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId)
 {
     u32 dx, dy;
-    u32 height = ExcavationStoneList[itemId].height;
-    u32 width = ExcavationStoneList[itemId].width;
+    u32 height = MiningStoneList[itemId].height;
+    u32 width = MiningStoneList[itemId].width;
 
     if ((x + width) > GRID_WIDTH)
         return FALSE;
@@ -2766,7 +2756,7 @@ static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId)
     {
         for (dy = 0; dy < height; dy++) 
         {
-            if (sExcavationUiState->itemMap[x + dx + (y + dy) * GRID_WIDTH] != 0) 
+            if (sMiningUiState->itemMap[x + dx + (y + dy) * GRID_WIDTH] != 0) 
             {
                 return FALSE;
             }
@@ -2813,97 +2803,97 @@ static void DoDrawRandomStone(u8 itemId)
     OverwriteItemMapData(x, y, 6, itemId);
 }
 
-static void Excavation_CheckItemFound(void) 
+static void Mining_CheckItemFound(void) 
 {
     u8 full;
     u8 stop;
     u8 i;
 
-    full = sExcavationUiState->Item1_TilesToDigUp;
+    full = sMiningUiState->Item1_TilesToDigUp;
     stop = full+1;
 
-    if (sExcavationUiState->state_item1 < full) 
+    if (sMiningUiState->state_item1 < full) 
     {
         for(i=0;i<96;i++) 
         {
-            if(sExcavationUiState->itemMap[i] == 1 && sExcavationUiState->layerMap[i] == 6) 
+            if(sMiningUiState->itemMap[i] == 1 && sMiningUiState->layerMap[i] == 6) 
             {
-                sExcavationUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sExcavationUiState->state_item1++;
+                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->state_item1++;
             }
         }
-    } else if (sExcavationUiState->state_item1 == full) 
+    } else if (sMiningUiState->state_item1 == full) 
     {
         BeginNormalPaletteFade(0x00040000, 2, 16, 0, RGB_WHITE);
-        sExcavationUiState->state_item1 = stop;
+        sMiningUiState->state_item1 = stop;
         SetBuriedItemStatus(0,TRUE);
     }
 
-    full = sExcavationUiState->Item2_TilesToDigUp;
+    full = sMiningUiState->Item2_TilesToDigUp;
     stop = full+1;
 
-    if (sExcavationUiState->state_item2 < full) 
+    if (sMiningUiState->state_item2 < full) 
     {
         for(i=0;i<96;i++) 
         {
-            if(sExcavationUiState->itemMap[i] == 2 && sExcavationUiState->layerMap[i] == 6) 
+            if(sMiningUiState->itemMap[i] == 2 && sMiningUiState->layerMap[i] == 6) 
             {
-                sExcavationUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sExcavationUiState->state_item2++;
+                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->state_item2++;
             }
         }
-    } else if (sExcavationUiState->state_item2 == full) 
+    } else if (sMiningUiState->state_item2 == full) 
     {
         BeginNormalPaletteFade(0x00080000, 2, 16, 0, RGB_WHITE);
-        sExcavationUiState->state_item2 = stop;
+        sMiningUiState->state_item2 = stop;
         SetBuriedItemStatus(1,TRUE);
     }
 
-    full = sExcavationUiState->Item3_TilesToDigUp;
+    full = sMiningUiState->Item3_TilesToDigUp;
     stop = full+1;
 
-    if (sExcavationUiState->state_item3 < full) 
+    if (sMiningUiState->state_item3 < full) 
     {
         for(i=0;i<96;i++) 
         {
-            if(sExcavationUiState->itemMap[i] == 3 && sExcavationUiState->layerMap[i] == 6) 
+            if(sMiningUiState->itemMap[i] == 3 && sMiningUiState->layerMap[i] == 6) 
             {
-                sExcavationUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sExcavationUiState->state_item3++;
+                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->state_item3++;
             }
         }
-    } else if (sExcavationUiState->state_item3 == full) 
+    } else if (sMiningUiState->state_item3 == full) 
     {
         BeginNormalPaletteFade(0x00100000, 2, 16, 0, RGB_WHITE);
-        sExcavationUiState->state_item3 = stop;
+        sMiningUiState->state_item3 = stop;
         SetBuriedItemStatus(2,TRUE);
     }
 
-    full = sExcavationUiState->Item4_TilesToDigUp;
+    full = sMiningUiState->Item4_TilesToDigUp;
     stop = full+1;
 
-    if (sExcavationUiState->state_item4 < full) 
+    if (sMiningUiState->state_item4 < full) 
     {
         for(i=0;i<96;i++) 
         {
-            if(sExcavationUiState->itemMap[i] == 4 && sExcavationUiState->layerMap[i] == 6) 
+            if(sMiningUiState->itemMap[i] == 4 && sMiningUiState->layerMap[i] == 6) 
             {
-                sExcavationUiState->itemMap[i] = ITEM_TILE_DUG_UP;
-                sExcavationUiState->state_item4++;
+                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->state_item4++;
             }
         }
-    } else if (sExcavationUiState->state_item4 == full) 
+    } else if (sMiningUiState->state_item4 == full) 
     {
         BeginNormalPaletteFade(0x00200000, 2, 16, 0, RGB_WHITE);
-        sExcavationUiState->state_item4 = stop;
+        sMiningUiState->state_item4 = stop;
         SetBuriedItemStatus(3,TRUE);
     }
 
     for(i=0;i<96;i++) 
     {
-        if(sExcavationUiState->itemMap[i] == 6 && sExcavationUiState->layerMap[i] == 6) 
+        if(sMiningUiState->itemMap[i] == 6 && sMiningUiState->layerMap[i] == 6) 
         {
-            sExcavationUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+            sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
         }
     }
 
@@ -2927,7 +2917,7 @@ static bool8 AtCornerOfRectangle(u8 row, u8 col, u8 baseRow, u8 baseCol, u8 fina
 
 // Randomly generates a terrain, stores the layering in an array and draw the right tiles, with the help of the layer map, to the screen.
 // Use the above function just to draw a tile once (for updating the tile, use Terrain_UpdateLayerTileOnScreen(...); )
-static void Excavation_DrawRandomTerrain(void) 
+static void Mining_DrawRandomTerrain(void) 
 {
     /*u8 i;
       u8 x;
@@ -2939,7 +2929,7 @@ static void Excavation_DrawRandomTerrain(void)
 
     for (i = 0; i < 96; i++) 
     {
-    sExcavationUiState->layerMap[i] = 4;
+    sMiningUiState->layerMap[i] = 4;
     }
 
     for (i = 0; i < 96; i++) 
@@ -2947,10 +2937,10 @@ static void Excavation_DrawRandomTerrain(void)
     rnd = (Random() >> 14);
     if (rnd == 0) 
     {
-    sExcavationUiState->layerMap[i] = 2;
+    sMiningUiState->layerMap[i] = 2;
     } else if (rnd == 1 || rnd == 2) 
     {
-    sExcavationUiState->layerMap[i] = 0;
+    sMiningUiState->layerMap[i] = 0;
     }
 
     }
@@ -2963,7 +2953,7 @@ static void Excavation_DrawRandomTerrain(void)
     {
     for (x = 0; x < 12 && i < 96; x++, i++) 
     {
-    Terrain_DrawLayerTileToScreen(x, y, sExcavationUiState->layerMap[i], ptr);
+    Terrain_DrawLayerTileToScreen(x, y, sMiningUiState->layerMap[i], ptr);
     }
     }*/
 
@@ -2978,7 +2968,7 @@ static void Excavation_DrawRandomTerrain(void)
 
     //Start by placing blank layer 3 rocks
     for (i = 0; i < 96; ++i) {    
-        sExcavationUiState->layerMap[i] = 2;
+        sMiningUiState->layerMap[i] = 2;
     }
 
     //Create patches of lighter dirt areas
@@ -3005,7 +2995,7 @@ static void Excavation_DrawRandomTerrain(void)
         {
             for (j = col1; j < col2; ++j) //col1 is needed in subsequent loops
                                           //sUndergroundMiningPtr->grid[row1][j] = L2_SMALL_ROCK;
-                sExcavationUiState->layerMap[j + row1*12] = 4;
+                sMiningUiState->layerMap[j + row1*12] = 4;
         }
     }
 
@@ -3041,7 +3031,7 @@ static void Excavation_DrawRandomTerrain(void)
                 if (AtCornerOfRectangle(k, m, baseRow, baseCol, baseRow + 4, baseCol + 4))
                     continue; //Leave corner out
 
-                sExcavationUiState->layerMap[m + k*12] = 0;
+                sMiningUiState->layerMap[m + k*12] = 0;
             }
         }
     }
@@ -3054,7 +3044,7 @@ static void Excavation_DrawRandomTerrain(void)
     {
         for (x = 0; x < 12 && i < 96; x++, i++) 
         {
-            Terrain_DrawLayerTileToScreen(x, y, sExcavationUiState->layerMap[i], ptr);
+            Terrain_DrawLayerTileToScreen(x, y, sMiningUiState->layerMap[i], ptr);
         }
     }
 }
@@ -3066,24 +3056,24 @@ static void Terrain_UpdateLayerTileOnScreen(u16* ptr, s8 ofsX, s8 ofsY)
     u8 tileX;
     u8 tileY;
 
-    //if ((ofsX + sExcavationUiState->cursorX) > 11 || (ofsX == -1 && sExcavationUiState->cursorX == 0)) 
+    //if ((ofsX + sMiningUiState->cursorX) > 11 || (ofsX == -1 && sMiningUiState->cursorX == 0)) 
     //{
         //  ofsX = 0;
         //}
 
-    i = (sExcavationUiState->cursorY-2+ofsY)*12 + sExcavationUiState->cursorX + ofsX; // Why the minus 2? Because the cursorY value starts at 2, so when calculating the position of the cursor, we have that additional 2 with it!!
-    tileX = (sExcavationUiState->cursorX+ofsX) * 2;
-    tileY = (sExcavationUiState->cursorY+ofsY) * 2;
-    if (sExcavationUiState->layerMap[i] < 6) 
+    i = (sMiningUiState->cursorY-2+ofsY)*12 + sMiningUiState->cursorX + ofsX; // Why the minus 2? Because the cursorY value starts at 2, so when calculating the position of the cursor, we have that additional 2 with it!!
+    tileX = (sMiningUiState->cursorX+ofsX) * 2;
+    tileY = (sMiningUiState->cursorY+ofsY) * 2;
+    if (sMiningUiState->layerMap[i] < 6) 
     {
         // Here, case 0 is missing because it will never appear. Why? Because the value we are doing the switch statement on would need to be negative.
         // Case 6 clears the tile so we can take a look at Bg3 (for the item sprite)!
         //
         // Other than that, the tiles here are in order.
 
-        sExcavationUiState->layerMap[i]++;
+        sMiningUiState->layerMap[i]++;
 
-        switch (sExcavationUiState->layerMap[i]) { // Incrementing? Idk if thats the bug for wrong tile replacements...
+        switch (sMiningUiState->layerMap[i]) { // Incrementing? Idk if thats the bug for wrong tile replacements...
             case 1:
                 OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
                 OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
@@ -3127,32 +3117,32 @@ static void Terrain_UpdateLayerTileOnScreen(u16* ptr, s8 ofsX, s8 ofsY)
 // Using this function here to overwrite the tilemap entry when hitting with the pickaxe (blue button is pressed)
 static u8 Terrain_Pickaxe_OverwriteTiles(u16* ptr) 
 {
-    u8 pos = sExcavationUiState->cursorX + (sExcavationUiState->cursorY-2)*12;
+    u8 pos = sMiningUiState->cursorX + (sMiningUiState->cursorY-2)*12;
 
-    if (sExcavationUiState->itemMap[pos] != ITEM_TILE_DUG_UP) 
+    if (sMiningUiState->itemMap[pos] != ITEM_TILE_DUG_UP) 
     {
-        if (sExcavationUiState->cursorX != 0) 
+        if (sMiningUiState->cursorX != 0) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, -1, 0);
         }
-        if (sExcavationUiState->cursorX != 11) 
+        if (sMiningUiState->cursorX != 11) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, 1, 0);
         }
 
         // We have to add '2' to 7 and 0 because, remember: The cursor spawns at Y_position 2!!!
-        if (sExcavationUiState->cursorY != 9) 
+        if (sMiningUiState->cursorY != 9) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, 0, 1);
         }
-        if (sExcavationUiState->cursorY != 2) 
+        if (sMiningUiState->cursorY != 2) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, 0, -1);
         }
 
         // Center hit
         Terrain_UpdateLayerTileOnScreen(ptr,0,0);
-        if (sExcavationUiState->tool == BLUE_BUTTON) 
+        if (sMiningUiState->tool == BLUE_BUTTON) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr,0,0);
         }
@@ -3166,34 +3156,34 @@ static u8 Terrain_Pickaxe_OverwriteTiles(u16* ptr)
 static void Terrain_Hammer_OverwriteTiles(u16* ptr) 
 {
     u8 isItemDugUp;
-    u8 pos = sExcavationUiState->cursorX + (sExcavationUiState->cursorY-2)*12;
+    u8 pos = sMiningUiState->cursorX + (sMiningUiState->cursorY-2)*12;
 
     isItemDugUp = Terrain_Pickaxe_OverwriteTiles(ptr);
     if (isItemDugUp == 0) 
     {
         // Corners
         // We have to add '2' to 7 and 0 because, remember: The cursor spawns at Y_position 2!!!
-        if (sExcavationUiState->cursorX != 11 && sExcavationUiState->cursorY != 9) 
+        if (sMiningUiState->cursorX != 11 && sMiningUiState->cursorY != 9) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, 1, 1);
         }
 
-        if (sExcavationUiState->cursorX != 0 && sExcavationUiState->cursorY != 9) 
+        if (sMiningUiState->cursorX != 0 && sMiningUiState->cursorY != 9) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, -1, 1);
         }
 
-        if (sExcavationUiState->cursorX != 11 && sExcavationUiState->cursorY != 2) 
+        if (sMiningUiState->cursorX != 11 && sMiningUiState->cursorY != 2) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, 1, -1);
         }
 
-        if (sExcavationUiState->cursorX != 0 && sExcavationUiState->cursorY != 2) 
+        if (sMiningUiState->cursorX != 0 && sMiningUiState->cursorY != 2) 
         {
             Terrain_UpdateLayerTileOnScreen(ptr, -1, -1);
         }
 
-        if (sExcavationUiState->layerMap[pos] != 6) 
+        if (sMiningUiState->layerMap[pos] != 6) 
         {
             Terrain_Pickaxe_OverwriteTiles(ptr);
         }
@@ -3201,10 +3191,10 @@ static void Terrain_Hammer_OverwriteTiles(u16* ptr)
 }
 
 // Used in the Input task.
-static void Excavation_UpdateTerrain(void) 
+static void Mining_UpdateTerrain(void) 
 {
     u16* ptr = GetBgTilemapBuffer(2);
-    switch (sExcavationUiState->tool) 
+    switch (sMiningUiState->tool) 
     {
         case RED_BUTTON:
             Terrain_Hammer_OverwriteTiles(ptr);
@@ -3215,22 +3205,22 @@ static void Excavation_UpdateTerrain(void)
     }
 }
 
-static void Task_ExcavationFadeAndExitMenu(u8 taskId) 
+static void Task_MiningFadeAndExitMenu(u8 taskId) 
 {
     if (!gPaletteFade.active) 
     {
-        SetMainCallback2(sExcavationUiState->leavingCallback);
-        Excavation_FreeResources();
+        SetMainCallback2(sMiningUiState->leavingCallback);
+        Mining_FreeResources();
         DestroyTask(taskId);
     }
 }
 
-static void Excavation_FreeResources(void) 
+static void Mining_FreeResources(void) 
 {
     // Free our data struct and our BG1 tilemap buffer
-    if (sExcavationUiState != NULL)
+    if (sMiningUiState != NULL)
     {
-        Free(sExcavationUiState);
+        Free(sMiningUiState);
     }
     if (sBg3TilemapBuffer != NULL)
     {
@@ -3265,9 +3255,9 @@ static void InitMiningWindows(void)
         DeactivateAllTextPrinters();
         ScheduleBgCopyTilemapToVram(0);
 #if FLAG_USE_DEFAULT_MESSAGE_BOX == FALSE
-        LoadBgTiles(GetWindowAttribute(WIN_MSG, WINDOW_BG), gExcavationMessageBoxGfx, 0x1C0, 20);
-        LoadPalette(gExcavationMessageBoxPal, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
-        LoadPalette(gExcavationMessageBoxPal, BG_PLTT_ID(14), PLTT_SIZE_4BPP);
+        LoadBgTiles(GetWindowAttribute(WIN_MSG, WINDOW_BG), gMiningMessageBoxGfx, 0x1C0, 20);
+        LoadPalette(gMiningMessageBoxPal, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
+        LoadPalette(gMiningMessageBoxPal, BG_PLTT_ID(14), PLTT_SIZE_4BPP);
 #elif FLAG_USE_DEFAULT_MESSAGE_BOX == TRUE
         LoadBgTiles(GetWindowAttribute(WIN_MSG, WINDOW_BG), gMessageBox_Gfx, 0x1C0, 20);
         LoadPalette(GetOverworldTextboxPalettePtr(), BG_PLTT_ID(15), PLTT_SIZE_4BPP);
@@ -3298,7 +3288,7 @@ static void PrintMessage(const u8 *string)
 
 static u32 GetCrackPosition(void) 
 {
-    return sExcavationUiState->stressLevelPos;
+    return sMiningUiState->stressLevelPos;
 }
 
 static bool32 IsCrackMax(void) 
@@ -3308,16 +3298,16 @@ static bool32 IsCrackMax(void)
 
 static void EndMining(u8 taskId) 
 {
-    sExcavationUiState->loadGameState = STATE_GAME_FINISH;
-    gTasks[taskId].func = Task_ExcavationPrintResult;
+    sMiningUiState->loadGameState = STATE_GAME_FINISH;
+    gTasks[taskId].func = Task_MiningPrintResult;
 }
 
 static bool32 ClearWindowPlaySelectButtonPress(void) 
 {
-    if (JOY_NEW(A_BUTTON) && !sExcavationUiState->isCollapseAnimActive && !sExcavationUiState->shouldShake) 
+    if (JOY_NEW(A_BUTTON) && !sMiningUiState->isCollapseAnimActive && !sMiningUiState->shouldShake) 
     {
         PlaySE(SE_SELECT);
-        switch (sExcavationUiState->loadGameState) 
+        switch (sMiningUiState->loadGameState) 
         {
             case STATE_GAME_FINISH:
             case STATE_ITEM_NAME_1:
@@ -3345,7 +3335,7 @@ static void Task_WaitButtonPressOpening(u8 taskId)
         if (!ClearWindowPlaySelectButtonPress())
             return;
 
-        switch (sExcavationUiState->loadGameState) 
+        switch (sMiningUiState->loadGameState) 
         {
             case STATE_GAME_FINISH:
             case STATE_ITEM_NAME_1:
@@ -3356,13 +3346,13 @@ static void Task_WaitButtonPressOpening(u8 taskId)
             case STATE_ITEM_BAG_3:
             case STATE_ITEM_NAME_4:
             case STATE_ITEM_BAG_4:
-                gTasks[taskId].func = Task_ExcavationPrintResult;
+                gTasks[taskId].func = Task_MiningPrintResult;
                 break;
             case STATE_QUIT:
-                ExitExcavationUI(taskId);
+                ExitMiningUI(taskId);
                 break;
             default:
-                gTasks[taskId].func = Task_ExcavationMainInput;
+                gTasks[taskId].func = Task_MiningMainInput;
                 break;
         }
     } else if (JOY_NEW(A_BUTTON))
@@ -3377,7 +3367,7 @@ static void Task_WaitButtonPressOpening(u8 taskId)
     }
 }
 
-static void Task_ExcavationPrintResult(u8 taskId) 
+static void Task_MiningPrintResult(u8 taskId) 
 {
     u32 itemIndex = ConvertLoadGameStateToItemIndex();
     u32 itemId = GetBuriedItemId(itemIndex);
@@ -3385,11 +3375,11 @@ static void Task_ExcavationPrintResult(u8 taskId)
     if (gPaletteFade.active)
         return;
 
-    switch (sExcavationUiState->loadGameState)
+    switch (sMiningUiState->loadGameState)
 
     {
         case STATE_GAME_START:
-            gTasks[taskId].func = Task_ExcavationMainInput;
+            gTasks[taskId].func = Task_MiningMainInput;
             break;
         case STATE_GAME_FINISH:
             HandleGameFinish(taskId);
@@ -3407,14 +3397,14 @@ static void Task_ExcavationPrintResult(u8 taskId)
             GetItemOrPrintError(taskId,itemIndex,itemId);
             break;
         default:
-            ExitExcavationUI(taskId);
+            ExitMiningUI(taskId);
             break;
     }
 }
 
 static u32 ConvertLoadGameStateToItemIndex(void) 
 {
-    switch (sExcavationUiState->loadGameState)
+    switch (sMiningUiState->loadGameState)
 
     {
         default:
@@ -3435,7 +3425,7 @@ static u32 ConvertLoadGameStateToItemIndex(void)
 
 static void GetItemOrPrintError(u8 taskId, u32 itemIndex, u32 itemId) 
 {
-    sExcavationUiState->loadGameState++;
+    sMiningUiState->loadGameState++;
 
     if (itemId == ITEM_NONE)
         return;
@@ -3449,7 +3439,7 @@ static void GetItemOrPrintError(u8 taskId, u32 itemIndex, u32 itemId)
 
 static void CheckItemAndPrint(u8 taskId, u32 itemIndex, u32 itemId) 
 {
-    sExcavationUiState->loadGameState++;
+    sMiningUiState->loadGameState++;
 
     if (itemId == ITEM_NONE)
         return;
@@ -3463,7 +3453,7 @@ static void CheckItemAndPrint(u8 taskId, u32 itemIndex, u32 itemId)
 
 static void MakeCursorInvisible(void) 
 {
-    gSprites[sExcavationUiState->cursorSpriteIndex].invisible = 1;
+    gSprites[sMiningUiState->cursorSpriteIndex].invisible = 1;
 }
 
 struct HighlightWindowCoords 
@@ -3490,10 +3480,10 @@ static void Task_WallCollapseDelay(u8 taskId)
 {
     u16* tilemapBuf = GetBgTilemapBuffer(1);
 
-    switch(sExcavationUiState->delayCounter)
+    switch(sMiningUiState->delayCounter)
     {
         default:
-            sExcavationUiState->delayCounter++;
+            sMiningUiState->delayCounter++;
             break;
         case 0:
         case 2:
@@ -3517,15 +3507,15 @@ static void Task_WallCollapseDelay(u8 taskId)
         case 38:
             for (u32 j=0; j<30; j++)
             {
-                OverwriteTileDataInTilemapBuffer(1, j, (sExcavationUiState->delayCounter/2), tilemapBuf, 2);
+                OverwriteTileDataInTilemapBuffer(1, j, (sMiningUiState->delayCounter/2), tilemapBuf, 2);
                 ScheduleBgCopyTilemapToVram(1);
                 DoScheduledBgTilemapCopiesToVram();
             }
-            sExcavationUiState->delayCounter++;
+            sMiningUiState->delayCounter++;
             break;
         case 40:
             DestroyTask(taskId);
-            sExcavationUiState->isCollapseAnimActive = FALSE;
+            sMiningUiState->isCollapseAnimActive = FALSE;
             PrintMessage(sText_TheWall);
             break;
     }
@@ -3533,8 +3523,8 @@ static void Task_WallCollapseDelay(u8 taskId)
 
 static void WallCollapseAnimation() 
 {
-    sExcavationUiState->delayCounter = 0;
-    sExcavationUiState->isCollapseAnimActive = TRUE;
+    sMiningUiState->delayCounter = 0;
+    sMiningUiState->isCollapseAnimActive = TRUE;
     ShowBg(1);
 
     CreateTask(Task_WallCollapseDelay, 0);
@@ -3554,15 +3544,15 @@ static void HandleGameFinish(u8 taskId)
 
     if (IsCrackMax()) 
     {
-        // The Shake-Task creation is handled by Task_ExcavationUi_HandleMainInput
+        // The Shake-Task creation is handled by Task_MiningUi_HandleMainInput
         // Here, we only set the Shake Duration.
-        sExcavationUiState->shakeDuration = 6; 
+        sMiningUiState->shakeDuration = 6; 
     } else 
     {
         PrintMessage(sText_EverythingWas);
     }
 
-    sExcavationUiState->loadGameState++;
+    sMiningUiState->loadGameState++;
     gTasks[taskId].func = Task_WaitButtonPressOpening;
 }
 
@@ -3614,29 +3604,29 @@ static void InitBuriedItems(void)
 
 static void SetBuriedItemsId(u32 index, u32 itemId) 
 {
-    sExcavationUiState->buriedItem[index].itemId = ExcavationItemList[itemId].realItemId;
+    sMiningUiState->buriedItem[index].itemId = MiningItemList[itemId].realItemId;
 }
 
 static void SetBuriedItemStatus(u32 index, bool32 status) 
 {
-    sExcavationUiState->buriedItem[index].status = status;
+    sMiningUiState->buriedItem[index].status = status;
 }
 
 static u32 GetBuriedItemId(u32 index) 
 {
-    return sExcavationUiState->buriedItem[index].itemId;
+    return sMiningUiState->buriedItem[index].itemId;
 }
 
 static bool32 GetBuriedItemStatus(u32 index) 
 {
-    return sExcavationUiState->buriedItem[index].status;
+    return sMiningUiState->buriedItem[index].status;
 }
 
-static void ExitExcavationUI(u8 taskId) 
+static void ExitMiningUI(u8 taskId) 
 {
     PlaySE(SE_PC_OFF);
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
-    gTasks[taskId].func = Task_ExcavationFadeAndExitMenu;
+    gTasks[taskId].func = Task_MiningFadeAndExitMenu;
 }
 
 static u32 Debug_SetNumberOfBuriedItems(u32 rnd)
