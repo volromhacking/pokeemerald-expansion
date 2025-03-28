@@ -115,6 +115,10 @@ struct MiningState
     u32 cursorX;
     u32 cursorY;
 
+    u8 *sBg1TilemapBuffer; 
+    u8 *sBg2TilemapBuffer;
+    u8 *sBg3TilemapBuffer;
+
     // Items and Stones
     struct BuriedItem buriedItems[MAX_NUM_BURIED_ITEMS];
     struct BuriedItem buriedStones[COUNT_MAX_NUMBER_STONES];
@@ -164,9 +168,6 @@ struct MiningState
 #define TAG_HIT_PICKAXE         13
 
 static EWRAM_DATA struct MiningState *sMiningUiState = NULL;
-static EWRAM_DATA u8 *sBg1TilemapBuffer = NULL; // TODO: Add this to sMiningUi struct (?)
-static EWRAM_DATA u8 *sBg2TilemapBuffer = NULL; // TODO: Add this to sMiningUi struct (?)
-static EWRAM_DATA u8 *sBg3TilemapBuffer = NULL; // TODO: Add this to sMiningUi struct (?)
 
 #if DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
 static EWRAM_DATA u8 debugVariable = 0; // Debug
@@ -1658,16 +1659,16 @@ static bool8 Mining_InitBgs(void)
 
     ResetAllBgsCoordinates();
 
-    sBg1TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
-    sBg2TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
-    sBg3TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
-    if (sBg3TilemapBuffer == NULL) 
+    sMiningUiState->sBg1TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
+    sMiningUiState->sBg2TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
+    sMiningUiState->sBg3TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
+    if (sMiningUiState->sBg3TilemapBuffer == NULL) 
     {
         return FALSE;
-    } else if (sBg2TilemapBuffer == NULL) 
+    } else if (sMiningUiState->sBg2TilemapBuffer == NULL) 
     {
         return FALSE;
-    } else if (sBg1TilemapBuffer == NULL) 
+    } else if (sMiningUiState->sBg1TilemapBuffer == NULL) 
     {
         return FALSE;
     }
@@ -1676,9 +1677,9 @@ static bool8 Mining_InitBgs(void)
 
     InitBgsFromTemplates(0, sMiningBgTemplates, NELEMS(sMiningBgTemplates));
 
-    SetBgTilemapBuffer(1, sBg1TilemapBuffer);
-    SetBgTilemapBuffer(2, sBg2TilemapBuffer);
-    SetBgTilemapBuffer(3, sBg3TilemapBuffer);
+    SetBgTilemapBuffer(1, sMiningUiState->sBg1TilemapBuffer);
+    SetBgTilemapBuffer(2, sMiningUiState->sBg2TilemapBuffer);
+    SetBgTilemapBuffer(3, sMiningUiState->sBg3TilemapBuffer);
 
     ScheduleBgCopyTilemapToVram(1);
     ScheduleBgCopyTilemapToVram(2);
@@ -1907,8 +1908,8 @@ static bool8 Mining_LoadBgGraphics(void)
                     }
                 }
 
-                LZDecompressWram(gCracksAndTerrainTilemap, sBg2TilemapBuffer);
-                LZDecompressWram(sUiTilemap, sBg3TilemapBuffer);
+                LZDecompressWram(gCracksAndTerrainTilemap, sMiningUiState->sBg2TilemapBuffer);
+                LZDecompressWram(sUiTilemap, sMiningUiState->sBg3TilemapBuffer);
                 sMiningUiState->loadGameState++;
             }
             break;
@@ -3202,18 +3203,6 @@ static void Mining_FreeResources(void)
     if (sMiningUiState != NULL)
     {
         Free(sMiningUiState);
-    }
-    if (sBg3TilemapBuffer != NULL)
-    {
-        Free(sBg3TilemapBuffer);
-    }
-    if (sBg2TilemapBuffer != NULL)
-    {
-        Free(sBg2TilemapBuffer);
-    }
-    if (sBg1TilemapBuffer != NULL)
-    {
-        Free(sBg1TilemapBuffer);
     }
 
     // Free all allocated tilemap and pixel buffers associated with the windows.
