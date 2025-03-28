@@ -1090,7 +1090,6 @@ struct MiningStone
     u32 width;
 };
 
-// TODO: Replace placeholder item IDs
 static const struct MiningItem MiningItemList[] =
 {
     [ITEMID_NONE] = 
