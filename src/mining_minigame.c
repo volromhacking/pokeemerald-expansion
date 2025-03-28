@@ -115,6 +115,16 @@ struct MiningState
     u32 cursorX;
     u32 cursorY;
 
+    // Items and Stones
+    struct BuriedItem buriedItems[MAX_NUM_BURIED_ITEMS];
+    struct BuriedItem buriedStones[COUNT_MAX_NUMBER_STONES];
+
+    // Tools
+    bool32 tool;                  // Hammer or Pickaxe
+    u32 cursorSpriteIndex;
+    u32 bRedSpriteIndex;
+    u32 bBlueSpriteIndex;
+
     // Shake
     bool32 shouldShake;           // If set to true, shake gets executed every VBlank
     u32 shakeState;               // State of shaking steps
@@ -123,23 +133,13 @@ struct MiningState
     u32 ShakeHitEffect;
     bool32 toggleShakeDuringAnimation;
 
-    // Collapse Animation
-    u32 delayCounter;
-    bool32 isCollapseAnimActive;
-
-    // Tools
-    bool32 tool;                  // Hammer or Pickaxe
-    u32 cursorSpriteIndex;
-    u32 bRedSpriteIndex;
-    u32 bBlueSpriteIndex;
-
     // Stress Level
     u32 stressLevelCount;               // How many cracks in one 32x32 portion
     u32 stressLevelPos;                 // Which crack portion
 
-    // Items and Stones
-    struct BuriedItem buriedItems[MAX_NUM_BURIED_ITEMS];
-    struct BuriedItem buriedStones[COUNT_MAX_NUMBER_STONES];
+    // Collapse Animation
+    u32 delayCounter;
+    bool32 isCollapseAnimActive;
 };
 
 // Win IDs
@@ -165,8 +165,8 @@ struct MiningState
 
 static EWRAM_DATA struct MiningState *sMiningUiState = NULL;
 static EWRAM_DATA u8 *sBg1TilemapBuffer = NULL; // TODO: Add this to sMiningUi struct (?)
-static EWRAM_DATA u8 *sBg2TilemapBuffer = NULL;
-static EWRAM_DATA u8 *sBg3TilemapBuffer = NULL;
+static EWRAM_DATA u8 *sBg2TilemapBuffer = NULL; // TODO: Add this to sMiningUi struct (?)
+static EWRAM_DATA u8 *sBg3TilemapBuffer = NULL; // TODO: Add this to sMiningUi struct (?)
 
 #if DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
 static EWRAM_DATA u8 debugVariable = 0; // Debug
@@ -205,7 +205,7 @@ static const struct BgTemplate sMiningBgTemplates[] =
         .priority = 1,
     },
 
-    // Cracks, Terrain (idk how its called lol)
+    // Stress Level
     {
         .bg = 2,
         .charBaseIndex = 2,
@@ -1139,8 +1139,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_DAMP_ROCK] = 
     {
         .miningItemId = ITEMID_DAMP_ROCK,
-        // Change this
-        .bagItemId = ITEM_WATER_STONE,
+        .bagItemId = ITEM_DAMP_ROCK,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
@@ -1195,8 +1194,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_IRON_BALL] = 
     {
         .miningItemId = ITEMID_IRON_BALL,
-        // Change this
-        .bagItemId = ITEM_ULTRA_BALL,
+        .bagItemId = ITEM_IRON_BALL,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
@@ -1207,7 +1205,6 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_REVIVE_MAX] = 
     {
         .miningItemId = ITEMID_REVIVE_MAX,
-        // Change this
         .bagItemId = ITEM_MAX_REVIVE,
         .top = 2,
         .left = 2,
@@ -1219,7 +1216,6 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_EVER_STONE] = 
     {
         .miningItemId = ITEMID_EVER_STONE,
-        // Change this
         .bagItemId = ITEM_EVERSTONE,
         .top = 1,
         .left = 3,
@@ -1242,7 +1238,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_OVAL_STONE] = 
     {
         .miningItemId = ITEMID_OVAL_STONE,
-        .bagItemId = ITEM_HEART_SCALE,
+        .bagItemId = ITEM_OVAL_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
@@ -1253,7 +1249,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_LIGHT_CLAY] = 
     {
         .miningItemId = ITEMID_LIGHT_CLAY,
-        .bagItemId = ITEM_HEART_SCALE,
+        .bagItemId = ITEM_LIGHT_CLAY,
         .top = 3,
         .left = 3,
         .totalTiles = 10,
@@ -1264,7 +1260,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_HEAT_ROCK] = 
     {
         .miningItemId = ITEMID_HEAT_ROCK,
-        .bagItemId = ITEM_WATER_STONE,
+        .bagItemId = ITEM_HEAT_ROCK,
         .top = 2,
         .left = 3,
         .totalTiles = 9,
@@ -1275,7 +1271,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_ICY_ROCK] = 
     {
         .miningItemId = ITEMID_ICY_ROCK,
-        .bagItemId = ITEM_WATER_STONE,
+        .bagItemId = ITEM_ICY_ROCK,
         .top = 3,
         .left = 3,
         .totalTiles = 11,
@@ -1286,7 +1282,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_SMOOTH_ROCK] = 
     {
         .miningItemId = ITEMID_SMOOTH_ROCK,
-        .bagItemId = ITEM_WATER_STONE,
+        .bagItemId = ITEM_SMOOTH_ROCK,
         .top = 3,
         .left = 3,
         .totalTiles = 7,
@@ -1363,7 +1359,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_ODD_KEY_STONE] = 
     {
         .miningItemId = ITEMID_ODD_KEY_STONE,
-        .bagItemId = ITEM_SUN_STONE,
+        .bagItemId = ITEM_ODD_KEYSTONE,
         .top = 3,
         .left = 3,
         .totalTiles = 15,
@@ -1374,7 +1370,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_SKULL_FOSSIL] = 
     {
         .miningItemId = ITEMID_SKULL_FOSSIL,
-        .bagItemId = ITEM_SUN_STONE,
+        .bagItemId = ITEM_SKULL_FOSSIL,
         .top = 3,
         .left = 3,
         .totalTiles = 13,
@@ -1385,7 +1381,7 @@ static const struct MiningItem MiningItemList[] =
     [ITEMID_ARMOR_FOSSIL] = 
     {
         .miningItemId = ITEMID_ARMOR_FOSSIL,
-        .bagItemId = ITEM_SUN_STONE,
+        .bagItemId = ITEM_ARMOR_FOSSIL,
         .top = 3,
         .left = 3,
         .totalTiles = 15,
@@ -2518,7 +2514,6 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
 #define POS_OFFS_32X32 16
 #define POS_OFFS_64X64 32
 
-// TODO: Make every item have a palette, even if two items have the same palette
 static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag) 
 {
     struct SpriteTemplate gSpriteTemplate;
