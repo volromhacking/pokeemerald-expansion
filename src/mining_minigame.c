@@ -1,3 +1,10 @@
+// TODO:        Make a 3 frame cursor sprite and add it to the mining_minigame graphics folder instead of using 
+//              the one from the pokenav
+// TODO++:      Completely rewrite the item generation algorithm. Splitting items into four zones is a bad idea.
+//              Use the current stone generation algorithm that checks WHICH stone can be placed WHERE, by iterating
+//              through the `itemMap[]`.
+// END TODO:    Check and fix the DEBUG SYSTEM for this minigame.
+// END TODO:    Make sure there are no warnings whatsoever!
 #include "mining_minigame.h"
 #include "gba/types.h"
 #include "gba/defines.h"
@@ -100,10 +107,12 @@ static void Debug_RaiseSpritePriority(u32 spriteId);
 struct BuriedItem 
 {
     u32 bagItemId;
-    u32 miningItemId;
+    u32 miningItemId; // TODO: This is not the `item ID`, but the id that handles one of the 4 items that can be placed
+                      // The Value it should hold are 0, 1, 2 and 3 nothing more
     bool32 isDugUp;
     bool32 isSelected;
     u32 buriedState;
+    u32 spriteId;
 };
 
 struct MiningState 
@@ -1512,30 +1521,61 @@ static void Mining_Init(MainCallback callback)
     sMiningUiState->buriedItems[2].buriedState = 0;
     sMiningUiState->buriedItems[3].buriedState = 0;
 
-    // Always zone1 and zone4 have an item
-    // TODO: Will change that because the user can always assume there is an item in those zones, 100 percently
-    sMiningUiState->buriedItems[0].isSelected = TRUE;
-    sMiningUiState->buriedItems[3].isSelected = TRUE;
-
     // Always two stones
     sMiningUiState->buriedStones[0].isSelected = TRUE;
     sMiningUiState->buriedStones[1].isSelected = TRUE;
 
-    switch(Debug_SetNumberOfBuriedItems(random(3))) { // Debug
-        case 0:
-            sMiningUiState->buriedItems[2].isSelected = FALSE;
-            sMiningUiState->buriedItems[1].isSelected = FALSE;
-            break;
-        case 1:
-            sMiningUiState->buriedItems[2].isSelected = TRUE;
-            sMiningUiState->buriedItems[1].isSelected = FALSE;
-            break;
-        default:
-        case 2:
-            sMiningUiState->buriedItems[2].isSelected = TRUE;
-            sMiningUiState->buriedItems[1].isSelected = TRUE;
-            break;
+    // Generate Items
+    u32 amountItemsToSelect = random(3) + 2; // The `+ 2` says that the min. amount of items to be generated are 2.
+    u32 idsStep1[4] = {0,1,2,3};    // TODO: Rename this
+    u32 idsStep2[3];                // TODO: Rename this
+    u32 idsStep3[2];                // TODO: Rename this
+
+    u32 firstBuriedItemId = idsStep1[random(4)];
+    sMiningUiState->buriedItems[firstBuriedItemId].isSelected = TRUE;
+
+    for (u32 i = 0; i < 4; i++) 
+    {
+        if (idsStep1[i] == firstBuriedItemId)
+            continue;
+        
+        if (idsStep1[i] > firstBuriedItemId)
+            idsStep2[i-1] = idsStep1[i];
+        else 
+            idsStep2[i] = idsStep1[i];
     }
+
+    u32 secondBuriedItemId = idsStep2[random(3)];
+    sMiningUiState->buriedItems[secondBuriedItemId].isSelected = TRUE;
+
+    if (amountItemsToSelect > 2)
+    {
+        for (u32 i = 0; i < 3; i++) 
+        {
+            if (idsStep2[i] == secondBuriedItemId)
+                continue;
+
+            if (idsStep2[i] > secondBuriedItemId)
+                idsStep3[i-1] = idsStep2[i];
+            else 
+                idsStep3[i] = idsStep2[i];
+        }
+
+        u32 thirdBuriedItemId = idsStep2[random(2)];
+        sMiningUiState->buriedItems[thirdBuriedItemId].isSelected = TRUE;
+
+        if (amountItemsToSelect == 4)
+        {
+            u32 fourthBuriedItemId;
+            if (idsStep3[0] == thirdBuriedItemId) 
+                fourthBuriedItemId = idsStep3[1];
+            else 
+                fourthBuriedItemId = idsStep3[0];
+
+            sMiningUiState->buriedItems[fourthBuriedItemId].isSelected = TRUE;
+        }
+    }
+
     SetMainCallback2(Mining_SetupCB);
 }
 
@@ -2514,7 +2554,7 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
 #define POS_OFFS_32X32 16
 #define POS_OFFS_64X64 32
 
-static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag) 
+static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag, u32 miningItemId) 
 {
     struct SpriteTemplate gSpriteTemplate;
     u8 posX = x * 16;
@@ -2576,11 +2616,13 @@ static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag)
         default: // If Item and not Stone
             gSpriteTemplate = CreatePaletteAndReturnTemplate(MiningItemList[itemId].tag, itemNumPalTag, itemId);
             LoadCompressedSpriteSheet(MiningItemList[itemId].sheet);
-            spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
+            sMiningUiState->buriedItems[miningItemId].spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
+            DebugPrintf("Sprite ID: %d", sMiningUiState->buriedItems[miningItemId].spriteId);
+            DebugPrintf("PalNum:    %d", gSprites[sMiningUiState->buriedItems[miningItemId].spriteId].oam.paletteNum);
             break;
     }
 
-    Debug_RaiseSpritePriority(spriteId);
+    Debug_RaiseSpritePriority(sMiningUiState->buriedItems[itemId].spriteId);
 }
 
 // Defines && Macros
@@ -2705,7 +2747,7 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
                 continue;
             }
 
-            DrawItemSprite(x,y,itemId, paletteTag);
+            DrawItemSprite(x,y,itemId, paletteTag, itemStateId - 1);
             OverwriteItemMapData(x, y, itemStateId, itemId); // For the collection logic, overwrite the itemmap data
             isItemPlaced = TRUE;
             break;
@@ -2778,7 +2820,7 @@ static void DoDrawRandomStone(u8 itemId)
         y = Random() % GRID_HEIGHT;
     }
 
-    DrawItemSprite(x, y, itemId, TAG_DUMMY);
+    DrawItemSprite(x, y, itemId, TAG_DUMMY, 0);
     // Dont want to use ITEM_TILE_DUG_UP, not sure if something unexpected will happen
     OverwriteItemMapData(x, y, 6, itemId);
 }
@@ -2805,7 +2847,10 @@ static void Mining_CheckItemFound(void)
         }
     } else if (sMiningUiState->buriedItems[0].buriedState == full) 
     {
-        BeginNormalPaletteFade(0x00040000, 2, 16, 0, RGB_WHITE);
+        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[0].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
+        DebugPrintf("Item 0: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[0].spriteId].oam.paletteNum));
+        DebugPrintf("Item 0 palnum: %d", gSprites[sMiningUiState->buriedItems[0].spriteId].oam.paletteNum);
+        DebugPrintf("Item 0 spriteId: %d", sMiningUiState->buriedItems[0].spriteId);
         sMiningUiState->buriedItems[0].buriedState = stop;
         SetBuriedItemStatus(0,TRUE);
     }
@@ -2825,7 +2870,10 @@ static void Mining_CheckItemFound(void)
         }
     } else if (sMiningUiState->buriedItems[1].buriedState == full) 
     {
-        BeginNormalPaletteFade(0x00080000, 2, 16, 0, RGB_WHITE);
+        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[1].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
+        DebugPrintf("Item 1: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[1].spriteId].oam.paletteNum));
+        DebugPrintf("Item 1 palnum: %d", gSprites[sMiningUiState->buriedItems[1].spriteId].oam.paletteNum);
+        DebugPrintf("Item 1 spriteId: %d", sMiningUiState->buriedItems[1].spriteId);
         sMiningUiState->buriedItems[1].buriedState = stop;
         SetBuriedItemStatus(1,TRUE);
     }
@@ -2845,7 +2893,10 @@ static void Mining_CheckItemFound(void)
         }
     } else if (sMiningUiState->buriedItems[2].buriedState == full) 
     {
-        BeginNormalPaletteFade(0x00100000, 2, 16, 0, RGB_WHITE);
+        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[2].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
+        DebugPrintf("Item 2: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[2].spriteId].oam.paletteNum));
+        DebugPrintf("Item 2 palnum: %d", gSprites[sMiningUiState->buriedItems[2].spriteId].oam.paletteNum);
+        DebugPrintf("Item 2 spriteId: %d", sMiningUiState->buriedItems[2].spriteId);
         sMiningUiState->buriedItems[2].buriedState = stop;
         SetBuriedItemStatus(2,TRUE);
     }
@@ -2865,7 +2916,10 @@ static void Mining_CheckItemFound(void)
         }
     } else if (sMiningUiState->buriedItems[3].buriedState == full) 
     {
-        BeginNormalPaletteFade(0x00200000, 2, 16, 0, RGB_WHITE);
+        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[3].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
+        DebugPrintf("Item 3: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[3].spriteId].oam.paletteNum));
+        DebugPrintf("Item 3 palnum: %d", gSprites[sMiningUiState->buriedItems[3].spriteId].oam.paletteNum);
+        DebugPrintf("Item 3 spriteId: %d", sMiningUiState->buriedItems[3].spriteId);
         sMiningUiState->buriedItems[3].buriedState = stop;
         SetBuriedItemStatus(3,TRUE);
     }
