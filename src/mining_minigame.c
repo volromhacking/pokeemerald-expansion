@@ -159,6 +159,7 @@ struct MiningState
 #define WIN_MSG         0
 
 // Other Sprite Tags
+#define TAG_DUMMY               0
 #define TAG_CURSOR              1
 #define TAG_BUTTONS             2   
 
@@ -2112,7 +2113,6 @@ static void Mining_LoadSpriteGraphics(void)
         //Create an tempArray of ones that will def fit
         //rnd should pull from that temp array when using doDrawRandomStone
         //if rnd rolls a stone that's not in the tempArray, roll again
-
     }
 
     sMiningUiState->cursorSpriteIndex = CreateSprite(&gSpriteCursor, 8, 40, 0);
@@ -2120,9 +2120,8 @@ static void Mining_LoadSpriteGraphics(void)
     sMiningUiState->cursorY = 2;
     gSprites[sMiningUiState->cursorSpriteIndex].data[COMFY_X] = CreateComfyAnim_Spring(&animConfigX);
     gSprites[sMiningUiState->cursorSpriteIndex].data[COMFY_Y] = CreateComfyAnim_Spring(&animConfigY);
-
-    sMiningUiState->bRedSpriteIndex = CreateSprite(&gSpriteButtonRed, 217,78,0);
-    sMiningUiState->bBlueSpriteIndex = CreateSprite(&gSpriteButtonBlue, 217,138,1);
+    sMiningUiState->bRedSpriteIndex = CreateSprite(&gSpriteButtonRed, 217, 78, 0);
+    sMiningUiState->bBlueSpriteIndex = CreateSprite(&gSpriteButtonBlue, 217, 138, 1);
     sMiningUiState->tool = 0;
     LoadSpritePalette(sSpritePal_HitEffect);
     LoadCompressedSpriteSheet(sSpriteSheet_HitEffectHammer);
@@ -2142,9 +2141,8 @@ static void Task_MiningWaitFadeIn(u8 taskId)
     }
 }
 
-#define CURSOR_SPRITE gSprites[sMiningUiState->cursorSpriteIndex]
 #define BLUE_BUTTON 0
-#define RED_BUTTON 1
+#define RED_BUTTON  1
 
 static void Task_MiningMainInput(u8 taskId) 
 {
@@ -2213,6 +2211,9 @@ static void Task_MiningMainInput(u8 taskId)
 // You are still confused? Im sorry I cant help you, after one week, I will also have problems understanding that again.
 //
 // NOTE TO MY FUTURE SELF: The crack updating
+//
+// TODO: Rename to `stress level`
+// TODO: Maybe rewrite this shit into a table or something that is used by one function
 static void Crack_DrawCrack_0(u8 ofs, u8 ofs2, u16* ptr) 
 {
     OverwriteTileDataInTilemapBuffer(0x07, 21 - ofs * 4 + ofs2, 1, ptr, 0x01);
@@ -2331,11 +2332,17 @@ static void Crack_DrawCrack_6(u8 ofs, u8 ofs2, u16* ptr)
     OverwriteTileDataInTilemapBuffer(0x26, 23 - ofs * 4 + ofs2, 3, ptr, 0x01);
 }
 
-// DO NOT TOUCH ANY OF THE CRACK UPDATE FUNCTIONS!!!!! GENERATION IS TOO COMPLICATED TO GET FIXED!
+// This function draws the individual frames of the stress level indicator:
+//      - `offsetIn8` represents the offset to the left side of the screen. The bigger that value, the greater the stress level
+//      - `ofs2` represents the offset to the right side of the screen which is needed, to make the indicator flow smoothly.
+//      `offsetIn8`: `1 = 32 px` or `1 = 4x 8x8 tiles` afaik
+//      `ofs2`:      `1 = 8 px` or `1 = 8x8 tile`
+// TODO: Rename to `stress level`
 static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr) 
 {
     switch (sMiningUiState->stressLevelCount) 
-    {
+    {   
+        // TODO: write a function that handles the repeating pattern in the switch cases
         case 0:
             Crack_DrawCrack_0(offsetIn8, ofs2, ptr);
             if (sMiningUiState->tool == 1) 
@@ -2397,7 +2404,8 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
     }
 }
 
-// DO NOT TOUCH ANY OF THE CRACK UPDATE FUNCTIONS!!!!! GENERATION IS TOO COMPLICATED TO GET FIXED!
+// This is the function that is called to easily update the stress level indicator on the top of the screen.
+// TODO: Rename to `stress level`
 static void Mining_UpdateCracks(void) 
 {
     u16 *ptr = GetBgTilemapBuffer(2);
@@ -2437,11 +2445,8 @@ static void Mining_UpdateCracks(void)
 // other tiles as well. Thats why case 0 and case 1 do the same thing, to increase the probabily of drawing layer_tile 0 to the screen.
 static void Terrain_DrawLayerTileToScreen(u8 x, u8 y, u8 layer, u16* ptr) 
 {
-    u8 tileX = x;
-    u8 tileY = y;
-
-    tileX = x*2;
-    tileY = y*2;
+    u8 tileX = x*2;
+    u8 tileY = y*2;
 
     switch(layer) 
     {
@@ -2500,7 +2505,6 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
     return TempSpriteTemplate;
 }
 
-
 // These offset values are important because I dont want the sprites to be placed somewhere regarding the center and not the top left corner
 //
 // Basically what these offset do is this: (c is the center the sprite uses to navigate the position and @ is the point we want, the top left corner; for a 32x32 sprite)
@@ -2521,7 +2525,6 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
 //    | - - |--|
 //    | - - |--|
 //
-
 #define POS_OFFS_32X32 16
 #define POS_OFFS_64X64 32
 
@@ -2590,10 +2593,13 @@ static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag, u32 itemSta
             sMiningUiState->buriedItems[itemStateId].spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);   
             DebugPrintf("Sprite ID: %d", sMiningUiState->buriedItems[itemStateId].spriteId);
             DebugPrintf("PalNum:    %d", gSprites[sMiningUiState->buriedItems[itemStateId].spriteId].oam.paletteNum);
+
+            Debug_RaiseSpritePriority(sMiningUiState->buriedItems[itemId].spriteId);
+            return;
             break;
     }
 
-    Debug_RaiseSpritePriority(sMiningUiState->buriedItems[itemId].spriteId);
+    Debug_RaiseSpritePriority(spriteId);
 }
 
 // Defines && Macros
@@ -2633,7 +2639,6 @@ static void OverwriteItemMapData(u8 posX, u8 posY, u8 itemStateId, u8 itemId)
 static u8 CheckIfItemCanBePlaced(u8 itemId, u8 posX, u8 posY, u8 xBorder, u8 yBorder) 
 {
     u32 i;
-
 
     for(i=1;i<=4;i++) 
     {
@@ -2731,7 +2736,6 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
         }
     }
 }
-#define TAG_DUMMY 0
 
 static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId) // PSF magic
 {
@@ -2766,10 +2770,8 @@ static bool32 DoesStoneFitInItemMap(u8 itemId)
         return FALSE;
 
     for (coordX = 0; coordX < GRID_WIDTH; coordX++)
-
     {
         for (coordY = 0; coordY < GRID_HEIGHT; coordY++)
-
         {
             if (CanStoneBePlacedAtXY(coordX,coordY,itemId))
                 return TRUE;
@@ -2924,79 +2926,37 @@ static bool8 AtCornerOfRectangle(u8 row, u8 col, u8 baseRow, u8 baseCol, u8 fina
 // Use the above function just to draw a tile once (for updating the tile, use Terrain_UpdateLayerTileOnScreen(...); )
 static void Mining_DrawRandomTerrain(void) 
 {
-    /*u8 i;
-      u8 x;
-      u8 y;
-      u8 rnd;
-
-    // Pointer to the tilemap in VRAM
-    u16* ptr = GetBgTilemapBuffer(2);
-
-    for (i = 0; i < 96; i++) 
-    {
-    sMiningUiState->layerMap[i] = 4;
-    }
-
-    for (i = 0; i < 96; i++) 
-    {
-    rnd = (Random() >> 14);
-    if (rnd == 0) 
-    {
-    sMiningUiState->layerMap[i] = 2;
-    } else if (rnd == 1 || rnd == 2) 
-    {
-    sMiningUiState->layerMap[i] = 0;
-    }
-
-    }
-
-    i = 0; // Using 'i' again to get the layer of the layer map
-
-    // Using 'x', 'y' and 'i' to draw the right layer_tiles from layerMap to the screen.
-    // Why 'y = 2'? Because we need to have a distance from the top of the screen, which is 32px -> 2 * 16
-    for (y = 2; y < 8 +2; y++) 
-    {
-    for (x = 0; x < 12 && i < 96; x++, i++) 
-    {
-    Terrain_DrawLayerTileToScreen(x, y, sMiningUiState->layerMap[i], ptr);
-    }
-    }*/
-
     u8 row1, row2, col1, col2, x, y;
     u8 i, j, totalTimes;
-    s8 baseRow; //Rocks can go up to one row over on either top or bottom
-    s8 baseCol; //Rocks can go up to one col over on either left or right
+    s8 baseRow; // Rocks can go up to one row over on either top or bottom
+    s8 baseCol; // Rocks can go up to one col over on either left or right
     s8 finalRow;
     s8 finalCol, k, m;
     u16* ptr = GetBgTilemapBuffer(2);
 
-
     //Start by placing blank layer 3 rocks
-    for (i = 0; i < 96; ++i) {    
+    for (i = 0; i < 96; ++i) 
+    {    
         sMiningUiState->layerMap[i] = 2;
     }
 
     //Create patches of lighter dirt areas
     totalTimes = 3 + random(5);
     for (i = 0; i < totalTimes; ++i)
-
     {
         do
-
         {
             row1 = random(9);
             row2 = random(9);
         } while (row1 >= row2);
 
         do
-
         {
             col1 = random(13);
             col2 = random(13);
         } while (col1 >= col2);
 
         for (; row1 < row2; ++row1)
-
         {
             for (j = col1; j < col2; ++j) //col1 is needed in subsequent loops
                                           //sUndergroundMiningPtr->grid[row1][j] = L2_SMALL_ROCK;
@@ -3014,7 +2974,6 @@ static void Mining_DrawRandomTerrain(void)
       */
     totalTimes = random(5)+2;
     for (i = 0; i < totalTimes; ++i)
-
     {
         baseRow = RandRangeSigned(-4, 8); //Rocks can go up to one row over on either top or bottom
         baseCol = RandRangeSigned(-4, 12); //Rocks can go up to one col over on either left or right
@@ -3022,13 +2981,11 @@ static void Mining_DrawRandomTerrain(void)
         finalCol = baseCol + 5;
 
         for (k = baseRow; k < finalRow; ++k)
-
         {
             if (k < 0 || k >= 8)
                 continue; //Not legal row
 
             for (m = baseCol; m < finalCol; ++m)
-
             {
                 if (m < 0 || m >= 12)
                     continue; //Not legal column
@@ -3061,11 +3018,6 @@ static void Terrain_UpdateLayerTileOnScreen(u16* ptr, s8 ofsX, s8 ofsY)
     u8 tileX;
     u8 tileY;
 
-    //if ((ofsX + sMiningUiState->cursorX) > 11 || (ofsX == -1 && sMiningUiState->cursorX == 0)) 
-    //{
-        //  ofsX = 0;
-        //}
-
     i = (sMiningUiState->cursorY-2+ofsY)*12 + sMiningUiState->cursorX + ofsX; // Why the minus 2? Because the cursorY value starts at 2, so when calculating the position of the cursor, we have that additional 2 with it!!
     tileX = (sMiningUiState->cursorX+ofsX) * 2;
     tileY = (sMiningUiState->cursorY+ofsY) * 2;
@@ -3078,7 +3030,8 @@ static void Terrain_UpdateLayerTileOnScreen(u16* ptr, s8 ofsX, s8 ofsY)
 
         sMiningUiState->layerMap[i]++;
 
-        switch (sMiningUiState->layerMap[i]) { // Incrementing? Idk if thats the bug for wrong tile replacements...
+        switch (sMiningUiState->layerMap[i]) // Incrementing? Idk if thats the bug for wrong tile replacements... 
+        { 
             case 1:
                 OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
                 OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
@@ -3222,16 +3175,11 @@ static void Task_MiningFadeAndExitMenu(u8 taskId)
 
 static void Mining_FreeResources(void) 
 {
-    // Free our data struct and our BG1 tilemap buffer
     if (sMiningUiState != NULL)
-    {
         Free(sMiningUiState);
-    }
 
-    // Free all allocated tilemap and pixel buffers associated with the windows.
     FreeAllWindowBuffers();
     ReleaseComfyAnims();
-    // Reset all sprite data
     ResetSpriteData();
     SetGpuReg(REG_OFFSET_WIN0H, 0);
     SetGpuReg(REG_OFFSET_WIN0V, 0);
@@ -3274,8 +3222,6 @@ static void PrintMessage(const u8 *string)
     CopyWindowToVram(WIN_MSG, 3);
     PutWindowTilemap(WIN_MSG);
     AddTextPrinterParameterized4(WIN_MSG, FONT_NORMAL, x, y, letterSpacing, 1, txtColor, GetPlayerTextSpeedDelay(),string);
-    //PutWindowTilemap(WIN_MSG);
-    //CopyWindowToVram(WIN_MSG,COPYWIN_FULL);
     RunTextPrinters();
 }
 
@@ -3369,7 +3315,6 @@ static void Task_MiningPrintResult(u8 taskId)
         return;
 
     switch (sMiningUiState->loadGameState)
-
     {
         case STATE_GAME_START:
             gTasks[taskId].func = Task_MiningMainInput;
@@ -3398,7 +3343,6 @@ static void Task_MiningPrintResult(u8 taskId)
 static u32 ConvertLoadGameStateToItemIndex(void) 
 {
     switch (sMiningUiState->loadGameState)
-
     {
         default:
         case STATE_ITEM_NAME_1:
@@ -3448,26 +3392,6 @@ static void MakeCursorInvisible(void)
 {
     gSprites[sMiningUiState->cursorSpriteIndex].invisible = 1;
 }
-
-struct HighlightWindowCoords 
-{
-    u8 left;
-    u8 right;
-};
-
-struct HWWindowPosition 
-{
-    struct HighlightWindowCoords winh;
-    struct HighlightWindowCoords winv;
-};
-
-static const struct HWWindowPosition HWinCoords[1] = 
-{
-    {
-        {7, 233},
-        {7, 89}
-    },
-};
 
 static void Task_WallCollapseDelay(u8 taskId)
 {
@@ -3519,7 +3443,6 @@ static void WallCollapseAnimation()
     sMiningUiState->delayCounter = 0;
     sMiningUiState->isCollapseAnimActive = TRUE;
     ShowBg(1);
-
     CreateTask(Task_WallCollapseDelay, 0);
 }
 
@@ -3528,14 +3451,11 @@ static void HandleGameFinish(u8 taskId)
     MakeCursorInvisible();
 
     if (IsCrackMax()) 
-    {
         // The Shake-Task creation is handled by Task_MiningUi_HandleMainInput
         // Here, we only set the Shake Duration.
         sMiningUiState->shakeDuration = 6; 
-    } else 
-    {
+    else 
         PrintMessage(sText_EverythingWas);
-    }
 
     sMiningUiState->loadGameState++;
     gTasks[taskId].func = Task_WaitButtonPressOpening;
