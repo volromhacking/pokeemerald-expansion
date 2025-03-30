@@ -3,6 +3,7 @@
 // TODO++:      Completely rewrite the item generation algorithm. Splitting items into four zones is a bad idea.
 //              Use the current stone generation algorithm that checks WHICH stone can be placed WHERE, by iterating
 //              through the `itemMap[]`.
+// TODO:        Add the hit effect frame that appears when you hit an already dug up item
 // END TODO:    Check and fix the DEBUG SYSTEM for this minigame.
 // END TODO:    Make sure there are no warnings whatsoever!
 #include "mining_minigame.h"
@@ -132,22 +133,22 @@ struct MiningState
     struct BuriedItem buriedStones[COUNT_MAX_NUMBER_STONES];
 
     // Tools
-    bool32 tool;                  // Hammer or Pickaxe
+    bool32 tool;    // Hammer or Pickaxe
     u32 cursorSpriteIndex;
     u32 bRedSpriteIndex;
     u32 bBlueSpriteIndex;
 
     // Shake
-    bool32 shouldShake;           // If set to true, shake gets executed every VBlank
-    u32 shakeState;               // State of shaking steps
-    u32 shakeDuration;            // How many times should the shaking loop?
+    bool32 shouldShake; // If set to true, shake gets executed every VBlank
+    u32 shakeState;     // State of shaking steps
+    u32 shakeDuration;  // How many times should the shaking loop?
     u32 ShakeHitTool;
     u32 ShakeHitEffect;
     bool32 toggleShakeDuringAnimation;
 
     // Stress Level
-    u32 stressLevelCount;               // How many cracks in one 32x32 portion
-    u32 stressLevelPos;                 // Which crack portion
+    u32 stressLevelCount;   // How many cracks in one 32x32 portion
+    u32 stressLevelPos;     // Which crack portion
 
     // Collapse Animation
     u32 delayCounter;
@@ -161,19 +162,16 @@ struct MiningState
 #define TAG_CURSOR              1
 #define TAG_BUTTONS             2   
 
-#define TAG_BLANK1              3
-#define TAG_BLANK2              4
+#define TAG_PAL_ITEM1           3
+#define TAG_PAL_ITEM2           4
+#define TAG_PAL_ITEM3           5
+#define TAG_PAL_ITEM4           6
 
-#define TAG_PAL_ITEM1           5
-#define TAG_PAL_ITEM2           6
-#define TAG_PAL_ITEM3           7
-#define TAG_PAL_ITEM4           8
-
-#define TAG_PAL_HIT_EFFECTS     9
-#define TAG_HIT_EFFECT_HAMMER   10
-#define TAG_HIT_EFFECT_PICKAXE  11
-#define TAG_HIT_HAMMER          12
-#define TAG_HIT_PICKAXE         13
+#define TAG_PAL_HIT_EFFECTS     7
+#define TAG_HIT_EFFECT_HAMMER   8
+#define TAG_HIT_EFFECT_PICKAXE  9
+#define TAG_HIT_HAMMER          10
+#define TAG_HIT_PICKAXE         11
 
 static EWRAM_DATA struct MiningState *sMiningUiState = NULL;
 
@@ -259,18 +257,6 @@ const u32 gHitEffectPickaxeGfx[] = INCBIN_U32("graphics/mining_minigame/hit_effe
 const u32 gHitHammerGfx[] = INCBIN_U32("graphics/mining_minigame/hit_hammer.4bpp.lz");
 const u32 gHitPickaxeGfx[] = INCBIN_U32("graphics/mining_minigame/hit_pickaxe.4bpp.lz");
 const u16 gHitEffectPal[] = INCBIN_U16("graphics/mining_minigame/hit_effects.gbapal");
-
-static const struct SpritePalette sSpritePal_Blank1[] =
-{
-    {gCursorPal, TAG_BLANK1},
-    {NULL},
-};
-
-static const struct SpritePalette sSpritePal_Blank2[] =
-{
-    {gCursorPal, TAG_BLANK2},
-    {NULL},
-};
 
 static const struct CompressedSpriteSheet sSpriteSheet_Cursor[] =
 {
@@ -1526,9 +1512,9 @@ static void Mining_Init(MainCallback callback)
 
     // Generate Items
     u32 amountItemsToSelect = random(3) + 2; // The `+ 2` says that the min. amount of items to be generated are 2.
-    u32 itemStateIdsStep1[4] = {0,1,2,3};    // TODO: Rename this
-    u32 itemStateIdsStep2[3];                // TODO: Rename this
-    u32 itemStateIdsStep3[2];                // TODO: Rename this
+    u32 itemStateIdsStep1[4] = {0,1,2,3};
+    u32 itemStateIdsStep2[3];
+    u32 itemStateIdsStep3[2];
 
     u32 firstBuriedItemId = itemStateIdsStep1[random(4)];
     sMiningUiState->buriedItems[firstBuriedItemId].isSelected = TRUE;
@@ -1578,6 +1564,7 @@ static void Mining_Init(MainCallback callback)
     SetMainCallback2(Mining_SetupCB);
 }
 
+// A MAYBE TODO: Move this to a different location??
 enum 
 {
     STATE_CLEAR_SCREEN = 0,
@@ -1609,6 +1596,7 @@ enum
     STATE_QUIT,
 };
 
+// TODO: Rename this to `stress level` or something. The drug is not on a pos lmao
 enum 
 {
     CRACK_POS_0,
@@ -1700,16 +1688,13 @@ static bool8 Mining_InitBgs(void)
     sMiningUiState->sBg1TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
     sMiningUiState->sBg2TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
     sMiningUiState->sBg3TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
+
     if (sMiningUiState->sBg3TilemapBuffer == NULL) 
-    {
         return FALSE;
-    } else if (sMiningUiState->sBg2TilemapBuffer == NULL) 
-    {
+    else if (sMiningUiState->sBg2TilemapBuffer == NULL) 
         return FALSE;
-    } else if (sMiningUiState->sBg1TilemapBuffer == NULL) 
-    {
+    else if (sMiningUiState->sBg1TilemapBuffer == NULL) 
         return FALSE;
-    }
 
     ResetBgsAndClearDma3BusyFlags(0);
 
@@ -1750,6 +1735,7 @@ static void Mining_MainCB(void)
     DoScheduledBgTilemapCopiesToVram();
 }
 
+// TODO: Rename this to `move sprite` or something similar. This does not shake the sprite
 static void ShakeSprite(s16 dx, s16 dy) 
 {
     u32 i;
@@ -1910,16 +1896,13 @@ static void Mining_FadeAndBail(void)
     SetMainCallback2(Mining_MainCB);
 }
 
-
+// Credits to Sbird (Karathan) --- Overwrite `tilemap`
 #define TILE_POS(x,y) (32*(y) + (x))
 
-// Overwrites specific tile in the tilemap of a background!!!
-// Credits to Sbird (Karathan) for helping me with the tile override!
 static void OverwriteTileDataInTilemapBuffer(u8 tile, u8 x, u8 y, u16* tilemapBuf, u8 pal) 
 {
     tilemapBuf[TILE_POS(x, y)] = tile | (pal << 12);
 }
-
 
 static bool8 Mining_LoadBgGraphics(void) 
 {
@@ -1937,7 +1920,6 @@ static bool8 Mining_LoadBgGraphics(void)
         case 1:
             if (FreeTempTileDataBuffersIfPossible() != TRUE) 
             {
-                //LZDecompressWram(sCollapseScreenUiTilemap, sBg1TilemapBuffer);
                 for (i = 0; i<32; i++) 
                 {
                     for (j = 0; j<32; j++) 
@@ -2026,15 +2008,11 @@ static u8 GetRandomItemId()
     u32 rnd = random(7);
 
     if (rnd < 4) 
-    {
         rarity = RARITY_COMMON;
-    } else if (rnd < 6) 
-    {
+    else if (rnd < 6) 
         rarity = RARITY_UNCOMMON;
-    } else 
-    {
-        rarity = RARITY_RARE;
-    }
+    else 
+        rarity = RARITY_RARE; 
 
     switch (rarity) 
     {
@@ -2058,7 +2036,6 @@ static u8 GetRandomItemId()
     return itemId;
 #endif
 
-    // This won't ever happen.
     return 0;
 }
 
@@ -2097,6 +2074,7 @@ static void Mining_LoadSpriteGraphics(void)
     ClearItemMap();
 
     // ITEMS
+    // TODO: Write a function that handles these if statements
     if (sMiningUiState->buriedItems[0].isSelected) 
     {
         itemId1 = GetRandomItemId();
@@ -2108,18 +2086,12 @@ static void Mining_LoadSpriteGraphics(void)
         itemId2 = GetRandomItemId();
         SetBuriedItemsId(1, itemId2);
         DoDrawRandomItem(2, itemId2);
-    } else 
-    {
-        LoadSpritePalette(sSpritePal_Blank1);
     }
     if (sMiningUiState->buriedItems[2].isSelected) 
     {
         itemId3 = GetRandomItemId();
         SetBuriedItemsId(2, itemId3);
         DoDrawRandomItem(3, itemId3);
-    } else 
-    {
-        LoadSpritePalette(sSpritePal_Blank2);
     }
     if (sMiningUiState->buriedItems[3].isSelected) 
     {
