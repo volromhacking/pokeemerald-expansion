@@ -107,8 +107,7 @@ static void Debug_RaiseSpritePriority(u32 spriteId);
 struct BuriedItem 
 {
     u32 bagItemId;
-    u32 miningItemId; // TODO: This is not the `item ID`, but the id that handles one of the 4 items that can be placed
-                      // The Value it should hold are 0, 1, 2 and 3 nothing more
+    u32 miningItemId;
     bool32 isDugUp;
     bool32 isSelected;
     u32 buriedState;
@@ -2554,7 +2553,7 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
 #define POS_OFFS_32X32 16
 #define POS_OFFS_64X64 32
 
-static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag, u32 miningItemId) 
+static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag, u32 itemStateId) 
 {
     struct SpriteTemplate gSpriteTemplate;
     u8 posX = x * 16;
@@ -2616,9 +2615,9 @@ static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag, u32 miningI
         default: // If Item and not Stone
             gSpriteTemplate = CreatePaletteAndReturnTemplate(MiningItemList[itemId].tag, itemNumPalTag, itemId);
             LoadCompressedSpriteSheet(MiningItemList[itemId].sheet);
-            sMiningUiState->buriedItems[miningItemId].spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
-            DebugPrintf("Sprite ID: %d", sMiningUiState->buriedItems[miningItemId].spriteId);
-            DebugPrintf("PalNum:    %d", gSprites[sMiningUiState->buriedItems[miningItemId].spriteId].oam.paletteNum);
+            sMiningUiState->buriedItems[itemStateId].spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);   
+            DebugPrintf("Sprite ID: %d", sMiningUiState->buriedItems[itemStateId].spriteId);
+            DebugPrintf("PalNum:    %d", gSprites[sMiningUiState->buriedItems[itemStateId].spriteId].oam.paletteNum);
             break;
     }
 
