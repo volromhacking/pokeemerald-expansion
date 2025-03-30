@@ -1526,50 +1526,50 @@ static void Mining_Init(MainCallback callback)
 
     // Generate Items
     u32 amountItemsToSelect = random(3) + 2; // The `+ 2` says that the min. amount of items to be generated are 2.
-    u32 idsStep1[4] = {0,1,2,3};    // TODO: Rename this
-    u32 idsStep2[3];                // TODO: Rename this
-    u32 idsStep3[2];                // TODO: Rename this
+    u32 itemStateIdsStep1[4] = {0,1,2,3};    // TODO: Rename this
+    u32 itemStateIdsStep2[3];                // TODO: Rename this
+    u32 itemStateIdsStep3[2];                // TODO: Rename this
 
-    u32 firstBuriedItemId = idsStep1[random(4)];
+    u32 firstBuriedItemId = itemStateIdsStep1[random(4)];
     sMiningUiState->buriedItems[firstBuriedItemId].isSelected = TRUE;
 
     for (u32 i = 0; i < 4; i++) 
     {
-        if (idsStep1[i] == firstBuriedItemId)
+        if (itemStateIdsStep1[i] == firstBuriedItemId)
             continue;
         
-        if (idsStep1[i] > firstBuriedItemId)
-            idsStep2[i-1] = idsStep1[i];
+        if (itemStateIdsStep1[i] > firstBuriedItemId)
+            itemStateIdsStep2[i-1] = itemStateIdsStep1[i];
         else 
-            idsStep2[i] = idsStep1[i];
+            itemStateIdsStep2[i] = itemStateIdsStep1[i];
     }
 
-    u32 secondBuriedItemId = idsStep2[random(3)];
+    u32 secondBuriedItemId = itemStateIdsStep2[random(3)];
     sMiningUiState->buriedItems[secondBuriedItemId].isSelected = TRUE;
 
     if (amountItemsToSelect > 2)
     {
         for (u32 i = 0; i < 3; i++) 
         {
-            if (idsStep2[i] == secondBuriedItemId)
+            if (itemStateIdsStep2[i] == secondBuriedItemId)
                 continue;
 
-            if (idsStep2[i] > secondBuriedItemId)
-                idsStep3[i-1] = idsStep2[i];
+            if (itemStateIdsStep2[i] > secondBuriedItemId)
+                itemStateIdsStep3[i-1] = itemStateIdsStep2[i];
             else 
-                idsStep3[i] = idsStep2[i];
+                itemStateIdsStep3[i] = itemStateIdsStep2[i];
         }
 
-        u32 thirdBuriedItemId = idsStep2[random(2)];
+        u32 thirdBuriedItemId = itemStateIdsStep2[random(2)];
         sMiningUiState->buriedItems[thirdBuriedItemId].isSelected = TRUE;
 
         if (amountItemsToSelect == 4)
         {
             u32 fourthBuriedItemId;
-            if (idsStep3[0] == thirdBuriedItemId) 
-                fourthBuriedItemId = idsStep3[1];
+            if (itemStateIdsStep3[0] == thirdBuriedItemId) 
+                fourthBuriedItemId = itemStateIdsStep3[1];
             else 
-                fourthBuriedItemId = idsStep3[0];
+                fourthBuriedItemId = itemStateIdsStep3[0];
 
             sMiningUiState->buriedItems[fourthBuriedItemId].isSelected = TRUE;
         }
@@ -2761,7 +2761,7 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
 }
 #define TAG_DUMMY 0
 
-static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId)
+static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId) // PSF magic
 {
     u32 dx, dy;
     u32 height = MiningStoneList[itemId].height;
@@ -2806,14 +2806,13 @@ static bool32 DoesStoneFitInItemMap(u8 itemId)
     return FALSE;
 }
 
-// TODO: Fill this function with the rest of the stones
+// TODO: Fill this function with the rest of the stones 
 static void DoDrawRandomStone(u8 itemId)
 {
     u32 x = Random() % GRID_WIDTH;
     u32 y = Random() % GRID_HEIGHT;
 
     while(!CanStoneBePlacedAtXY(x,y,itemId))
-
     {
         x = Random() % GRID_WIDTH;
         y = Random() % GRID_HEIGHT;
