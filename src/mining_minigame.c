@@ -174,6 +174,58 @@ struct MiningState
 #define TAG_HIT_HAMMER          10
 #define TAG_HIT_PICKAXE         11
 
+enum 
+{
+    STATE_CLEAR_SCREEN = 0,
+    STATE_RESET_DATA,
+    STATE_INIT_BGS,
+    STATE_LOAD_BGS,
+    STATE_LOAD_SPRITES,
+    STATE_WAIT_FADE,
+    STATE_FADE,
+    STATE_SET_CALLBACKS,
+};
+
+enum 
+{
+    STATE_GRAPHICS_VRAM,
+    STATE_GRAPHICS_DECOMPRESS,
+    STATE_GRAPHICS_PALETTES,
+    STATE_GRAPHICS_TERRAIN,
+    STATE_GAME_START,
+    STATE_GAME_FINISH,
+    STATE_ITEM_NAME_1,
+    STATE_ITEM_BAG_1,
+    STATE_ITEM_NAME_2,
+    STATE_ITEM_BAG_2,
+    STATE_ITEM_NAME_3,
+    STATE_ITEM_BAG_3,
+    STATE_ITEM_NAME_4,
+    STATE_ITEM_BAG_4,
+    STATE_QUIT,
+};
+
+enum 
+{
+    STRESS_LEVEL_POS_0,
+    STRESS_LEVEL_POS_1,
+    STRESS_LEVEL_POS_2,
+    STRESS_LEVEL_POS_3,
+    STRESS_LEVEL_POS_4,
+    STRESS_LEVEL_POS_5,
+    STRESS_LEVEL_POS_6,
+    STRESS_LEVEL_POS_7,
+    STRESS_LEVEL_POS_MAX,
+};
+
+enum 
+{
+    BG_TEXT_BOX = 0,
+    BG_COLLAPSE_SCREEN,
+    BG_STRESS_LEVEL,
+    BG_UI_GFX,
+};
+
 static EWRAM_DATA struct MiningState *sMiningUiState = NULL;
 
 #if DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
@@ -197,33 +249,26 @@ static const struct WindowTemplate sWindowTemplates[] =
 
 static const struct BgTemplate sMiningBgTemplates[] =
 {
-    // Text Box
     {
-        .bg = 0,
+        .bg = BG_TEXT_BOX,
         .charBaseIndex = 0,
         .mapBaseIndex = 13,
         .priority = 0,
     },
-
-    // Collapse Screen
     {
-        .bg = 1,
+        .bg = BG_COLLAPSE_SCREEN,
         .charBaseIndex = 1,
         .mapBaseIndex = 29,
         .priority = 1,
     },
-
-    // Stress Level
     {
-        .bg = 2,
+        .bg = BG_STRESS_LEVEL,
         .charBaseIndex = 2,
         .mapBaseIndex = 30,
         .priority = 2
     },
-
-    // Ui gfx
     {
-        .bg = 3,
+        .bg = BG_UI_GFX,
         .charBaseIndex = 3,
         .mapBaseIndex = 31,
         .priority = 3
@@ -1565,51 +1610,6 @@ static void Mining_Init(MainCallback callback)
     SetMainCallback2(Mining_SetupCB);
 }
 
-// A MAYBE TODO: Move this to a different location??
-enum 
-{
-    STATE_CLEAR_SCREEN = 0,
-    STATE_RESET_DATA,
-    STATE_INIT_BGS,
-    STATE_LOAD_BGS,
-    STATE_LOAD_SPRITES,
-    STATE_WAIT_FADE,
-    STATE_FADE,
-    STATE_SET_CALLBACKS,
-};
-
-enum 
-{
-    STATE_GRAPHICS_VRAM,
-    STATE_GRAPHICS_DECOMPRESS,
-    STATE_GRAPHICS_PALETTES,
-    STATE_GRAPHICS_TERRAIN,
-    STATE_GAME_START,
-    STATE_GAME_FINISH,
-    STATE_ITEM_NAME_1,
-    STATE_ITEM_BAG_1,
-    STATE_ITEM_NAME_2,
-    STATE_ITEM_BAG_2,
-    STATE_ITEM_NAME_3,
-    STATE_ITEM_BAG_3,
-    STATE_ITEM_NAME_4,
-    STATE_ITEM_BAG_4,
-    STATE_QUIT,
-};
-
-enum 
-{
-    STRESS_LEVEL_POS_0,
-    STRESS_LEVEL_POS_1,
-    STRESS_LEVEL_POS_2,
-    STRESS_LEVEL_POS_3,
-    STRESS_LEVEL_POS_4,
-    STRESS_LEVEL_POS_5,
-    STRESS_LEVEL_POS_6,
-    STRESS_LEVEL_POS_7,
-    STRESS_LEVEL_POS_MAX,
-};
-
 static void Mining_SetupCB(void) 
 {
     switch(gMain.state) 
@@ -2038,11 +2038,22 @@ static u8 GetRandomItemId()
     return 0;
 }
 
+static void InitItemsIfSelected(u32 item, u32 itemId) {
+    if (sMiningUiState->buriedItems[item].isSelected) 
+    {
+        itemId = GetRandomItemId();
+        SetBuriedItemsId(item, itemId);
+        DoDrawRandomItem(item+1, itemId);
+    }
+}
 
 static void Mining_LoadSpriteGraphics(void) 
 {
     u32 i;
-    u8 itemId1, itemId2, itemId3, itemId4;
+    u32 itemId1 = 0;
+    u32 itemId2 = 0;
+    u32 itemId3 = 0;
+    u32 itemId4 = 0;
     u32 stone = MININGID_NONE;
     struct ComfyAnimSpringConfig animConfigX, animConfigY;
 
@@ -2073,32 +2084,11 @@ static void Mining_LoadSpriteGraphics(void)
     ClearItemMap();
 
     // ITEMS
-    // TODO: Write a function that handles these if statements
-    if (sMiningUiState->buriedItems[0].isSelected) 
-    {
-        itemId1 = GetRandomItemId();
-        SetBuriedItemsId(0, itemId1);
-        DoDrawRandomItem(1, itemId1);
-    }
-    if (sMiningUiState->buriedItems[1].isSelected) 
-    {
-        itemId2 = GetRandomItemId();
-        SetBuriedItemsId(1, itemId2);
-        DoDrawRandomItem(2, itemId2);
-    }
-    if (sMiningUiState->buriedItems[2].isSelected) 
-    {
-        itemId3 = GetRandomItemId();
-        SetBuriedItemsId(2, itemId3);
-        DoDrawRandomItem(3, itemId3);
-    }
-    if (sMiningUiState->buriedItems[3].isSelected) 
-    {
-        itemId4 = GetRandomItemId();
-        SetBuriedItemsId(3, itemId4);
-        DoDrawRandomItem(4, itemId4);
-    }
-
+    InitItemsIfSelected(0, itemId1);
+    InitItemsIfSelected(1, itemId2);
+    InitItemsIfSelected(2, itemId3);
+    InitItemsIfSelected(3, itemId4);
+    
     for (i=0; i<MINING_COUNT_MAX_NUMBER_STONES; i++) 
     {
         stone = MININGID_NONE;
@@ -2338,45 +2328,24 @@ static void StressLevel_UpdateRelativeToFramePos(u8 offsetIn8, u8 ofs2, u16* ptr
 {
     switch (sMiningUiState->stressLevelCount) 
     {   
-        // TODO: write a function that handles the repeating pattern in the switch cases
         case 0:
             StressLevel_Draw_0(offsetIn8, ofs2, ptr);
-            if (sMiningUiState->tool == 1) 
-            {
-                sMiningUiState->stressLevelCount++;
-            }
             sMiningUiState->stressLevelCount++;
             break;
         case 1:
             StressLevel_Draw_1(offsetIn8, ofs2, ptr);
-            if (sMiningUiState->tool == 1) 
-            {
-                sMiningUiState->stressLevelCount++;
-            }
             sMiningUiState->stressLevelCount++;
             break;
         case 2:
             StressLevel_Draw_2(offsetIn8, ofs2, ptr);
-            if (sMiningUiState->tool == 1) 
-            {
-                sMiningUiState->stressLevelCount++;
-            }
             sMiningUiState->stressLevelCount++;
             break;
         case 3:
             StressLevel_Draw_3(offsetIn8, ofs2, ptr);
-            if (sMiningUiState->tool == 1) 
-            {
-                sMiningUiState->stressLevelCount++;
-            }
             sMiningUiState->stressLevelCount++;
             break;
         case 4:
             StressLevel_Draw_4(offsetIn8, ofs2, ptr);
-            if (sMiningUiState->tool == 1) 
-            {
-                sMiningUiState->stressLevelCount++;
-            }
             sMiningUiState->stressLevelCount++;
             break;
         case 5:
