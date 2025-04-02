@@ -2,112 +2,112 @@
 #include "constants/mining_minigame.h"
 
 static const int SpriteTileTable[][16] = {
-    [ITEMID_WATER_STONE] = {
+    [MININGID_WATER_STONE] = {
       1,1,1,0,1,1,1,0,1,1,0,0,0,0,0,0,
     },
-    [ITEMID_ARMOR_FOSSIL] = {
+    [MININGID_ARMOR_FOSSIL] = {
       1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     },
-    [ITEMID_MOON_STONE] = {
+    [MININGID_MOON_STONE] = {
       0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,
     },
-    [ITEMID_STAR_PIECE] = {
+    [MININGID_STAR_PIECE] = {
       0,1,0,0,1,1,1,0,0,1,0,0,0,0,0,0,
     },
-    [ITEMID_LEAF_STONE] = {
+    [MININGID_LEAF_STONE] = {
       0,1,0,0,1,1,1,0,1,1,1,0,0,1,0,0,
     },
-    [ITEMID_ICY_ROCK] = {
+    [MININGID_ICY_ROCK] = {
       0,1,1,0,1,1,1,1,1,1,1,1,1,0,0,1,
     },
-    [ITEMID_HARD_STONE] = {
+    [MININGID_HARD_STONE] = {
       1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,
     },
-    [ITEMID_DAMP_ROCK] = {
+    [MININGID_DAMP_ROCK] = {
       1,1,1,0,1,1,1,0,1,0,1,0,0,0,0,0,
     },
-    [ITEMID_ODD_KEY_STONE] = {
+    [MININGID_ODD_KEY_STONE] = {
       1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     },
-    [ITEMID_SKULL_FOSSIL] = {
+    [MININGID_SKULL_FOSSIL] = {
       1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,
     },
-    [ITEMID_FIRE_STONE] = {
+    [MININGID_FIRE_STONE] = {
       1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0,
     },
-    [ITEMID_GREEN_SHARD] = {
+    [MININGID_GREEN_SHARD] = {
       1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,
     },
-    [ITEMID_HEART_SCALE] = {
+    [MININGID_HEART_SCALE] = {
       1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,
     },
-    [ITEMID_THUNDER_STONE] = {
+    [MININGID_THUNDER_STONE] = {
       0,1,1,0,1,1,1,0,1,1,0,0,0,0,0,0,
     },
-    [ITEMID_REVIVE_MAX] = {
+    [MININGID_REVIVE_MAX] = {
       1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0,
     },
-    [ITEMID_HEAT_ROCK] = {
+    [MININGID_HEAT_ROCK] = {
       1,0,1,0,1,1,1,1,1,1,1,1,0,0,0,0,
     },
-    [ITEMID_YELLOW_SHARD] = {
+    [MININGID_YELLOW_SHARD] = {
       1,0,1,0,1,1,1,0,1,1,1,1,0,0,0,0,
     },
-    [ITEMID_OVAL_STONE] = {
+    [MININGID_OVAL_STONE] = {
       1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0,
     },
-    [ITEMID_EVER_STONE] = {
+    [MININGID_EVER_STONE] = {
       1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
     },
-    [ITEMID_IRON_BALL] = {
+    [MININGID_IRON_BALL] = {
       1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0,
     },
-    [ITEMID_SMOOTH_ROCK] = {
+    [MININGID_SMOOTH_ROCK] = {
       0,0,1,0,1,1,1,0,0,1,1,1,0,1,0,0,
     },
-    [ITEMID_BLUE_SHARD] = {
+    [MININGID_BLUE_SHARD] = {
       1,1,1,0,1,1,1,0,1,1,0,0,0,0,0,0,
     },
-    [ITEMID_RED_SHARD] = {
+    [MININGID_RED_SHARD] = {
       1,1,1,0,1,1,0,0,1,1,1,0,0,0,0,0,
     },
-    [ITEMID_REVIVE] = {
+    [MININGID_REVIVE] = {
       0,1,0,0,1,1,1,0,0,1,0,0,0,0,0,0,
     },
-    [ITEMID_LIGHT_CLAY] = {
+    [MININGID_LIGHT_CLAY] = {
       1,0,1,0,1,1,1,0,1,1,1,1,0,1,0,1,
     },
-    [ITEMID_SUN_STONE] = {
+    [MININGID_SUN_STONE] = {
       0,1,0,0,1,1,1,0,1,1,1,0,0,0,0,0,
     },
-    [ID_STONE_MUSHROOM2] = {
+    [MININGID_STONE_MUSHROOM2] = {
       0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,
     },
-    [ID_STONE_2x4] = {
+    [MININGID_STONE_2x4] = {
       1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,
     },
-    [ID_STONE_1x4] = {
+    [MININGID_STONE_1x4] = {
       1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,
     },
-    [ID_STONE_SNAKE1] = {
+    [MININGID_STONE_SNAKE1] = {
       1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,
     },
-    [ID_STONE_2x2] = {
+    [MININGID_STONE_2x2] = {
       1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,
     },
-    [ID_STONE_4x2] = {
+    [MININGID_STONE_4x2] = {
       1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
     },
-    [ID_STONE_4x1] = {
+    [MININGID_STONE_4x1] = {
       1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,
     },
-    [ID_STONE_3x3] = {
+    [MININGID_STONE_3x3] = {
       1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0,
     },
-    [ID_STONE_SNAKE2] = {
+    [MININGID_STONE_SNAKE2] = {
       0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,
     },
-    [ID_STONE_MUSHROOM1] = {
+    [MININGID_STONE_MUSHROOM1] = {
       1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,
     },
 };

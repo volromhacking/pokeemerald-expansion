@@ -65,7 +65,7 @@ static void Mining_FadeAndBail(void);
 static bool8 Mining_LoadBgGraphics(void);
 static void Mining_LoadSpriteGraphics(void);
 static void Mining_FreeResources(void);
-static void Mining_UpdateCracks(void);
+static void Mining_UpdateStressLevel(void);
 static void Mining_UpdateTerrain(void);
 static void Mining_DrawRandomTerrain(void);
 static void DoDrawRandomItem(u8 itemStateId, u8 itemId);
@@ -129,8 +129,8 @@ struct MiningState
     u8 *sBg3TilemapBuffer;
 
     // Items and Stones
-    struct BuriedItem buriedItems[MAX_NUM_BURIED_ITEMS];
-    struct BuriedItem buriedStones[COUNT_MAX_NUMBER_STONES];
+    struct BuriedItem buriedItems[MINING_MAX_NUM_BURIED_ITEMS];
+    struct BuriedItem buriedStones[MINING_COUNT_MAX_NUMBER_STONES];
 
     // Tools
     bool32 tool;    // Hammer or Pickaxe
@@ -653,121 +653,121 @@ static const u16 gItemFossilPal[] = INCBIN_U16("graphics/mining_minigame/items/f
 // Stone SpriteSheets and SpritePalettes
 static const struct CompressedSpriteSheet sSpriteSheet_Stone1x4[] =
 {
-    {gStone1x4Gfx, 64*64/2, TAG_STONE_1X4},
+    {gStone1x4Gfx, 64*64/2, MINING_TAG_STONE_1X4},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_Stone1x4[] =
 {
-    {gStonePal, TAG_STONE_1X4},
+    {gStonePal, MINING_TAG_STONE_1X4},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_Stone4x1[] =
 {
-    {gStone4x1Gfx, 64*64/2, TAG_STONE_4X1},
+    {gStone4x1Gfx, 64*64/2, MINING_TAG_STONE_4X1},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_Stone4x1[] =
 {
-    {gStonePal, TAG_STONE_4X1},
+    {gStonePal, MINING_TAG_STONE_4X1},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_Stone2x4[] =
 {
-    {gStone2x4Gfx, 64*64/2, TAG_STONE_2X4},
+    {gStone2x4Gfx, 64*64/2, MINING_TAG_STONE_2X4},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_Stone2x4[] =
 {
-    {gStonePal, TAG_STONE_2X4},
+    {gStonePal, MINING_TAG_STONE_2X4},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_Stone4x2[] =
 {
-    {gStone4x2Gfx, 64*64/2, TAG_STONE_4X2},
+    {gStone4x2Gfx, 64*64/2, MINING_TAG_STONE_4X2},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_Stone4x2[] =
 {
-    {gStonePal, TAG_STONE_4X2},
+    {gStonePal, MINING_TAG_STONE_4X2},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_Stone2x2[] =
 {
-    {gStone2x2Gfx, 64*64/2, TAG_STONE_2X2},
+    {gStone2x2Gfx, 64*64/2, MINING_TAG_STONE_2X2},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_Stone2x2[] =
 {
-    {gStonePal, TAG_STONE_2X2},
+    {gStonePal, MINING_TAG_STONE_2X2},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_Stone3x3[] =
 {
-    {gStone3x3Gfx, 64*64/2, TAG_STONE_3X3},
+    {gStone3x3Gfx, 64*64/2, MINING_TAG_STONE_3X3},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_Stone3x3[] =
 {
-    {gStonePal, TAG_STONE_3X3},
+    {gStonePal, MINING_TAG_STONE_3X3},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_StoneSnake1[] =
 {
-    {gStoneSnake1Gfx, 64*64/2, TAG_STONE_SNAKE1},
+    {gStoneSnake1Gfx, 64*64/2, MINING_TAG_STONE_SNAKE1},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_StoneSnake1[] =
 {
-    {gStonePal, TAG_STONE_SNAKE1},
+    {gStonePal, MINING_TAG_STONE_SNAKE1},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_StoneSnake2[] =
 {
-    {gStoneSnake2Gfx, 64*64/2, TAG_STONE_SNAKE2},
+    {gStoneSnake2Gfx, 64*64/2, MINING_TAG_STONE_SNAKE2},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_StoneSnake2[] =
 {
-    {gStonePal, TAG_STONE_SNAKE2},
+    {gStonePal, MINING_TAG_STONE_SNAKE2},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_StoneMushroom1[] =
 {
-    {gStoneMushroom1Gfx, 64*64/2, TAG_STONE_MUSHROOM1},
+    {gStoneMushroom1Gfx, 64*64/2, MINING_TAG_STONE_MUSHROOM1},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_StoneMushroom1[] =
 {
-    {gStonePal, TAG_STONE_MUSHROOM1},
+    {gStonePal, MINING_TAG_STONE_MUSHROOM1},
     {NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_StoneMushroom2[] =
 {
-    {gStoneMushroom2Gfx, 64*64/2, TAG_STONE_MUSHROOM2},
+    {gStoneMushroom2Gfx, 64*64/2, MINING_TAG_STONE_MUSHROOM2},
     {NULL},
 };
 
 static const struct SpritePalette sSpritePal_StoneMushroom2[] =
 {
-    {gStonePal, TAG_STONE_MUSHROOM2},
+    {gStonePal, MINING_TAG_STONE_MUSHROOM2},
     {NULL},
 };
 
@@ -776,188 +776,188 @@ static const struct CompressedSpriteSheet sSpriteSheet_ItemHeartScale =
 {
     gItemHeartScaleGfx,
     64*64/2,
-    TAG_ITEM_HEARTSCALE,
+    MINING_TAG_ITEM_HEARTSCALE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemHardStone =
 {
     gItemHardStoneGfx,
     64*64/2,
-    TAG_ITEM_HARDSTONE,
+    MINING_TAG_ITEM_HARDSTONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemRevive =
 {
     gItemReviveGfx,
     64*64/2,
-    TAG_ITEM_REVIVE,
+    MINING_TAG_ITEM_REVIVE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemStarPiece =
 {
     gItemStarPieceGfx,
     64*64/2,
-    TAG_ITEM_STAR_PIECE,
+    MINING_TAG_ITEM_STAR_PIECE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemDampRock =
 {
     gItemDampRockGfx,
     64*64/2,
-    TAG_ITEM_DAMP_ROCK,
+    MINING_TAG_ITEM_DAMP_ROCK,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemRedShard =
 {
     gItemRedShardGfx,
     64*64/2,
-    TAG_ITEM_RED_SHARD
+    MINING_TAG_ITEM_RED_SHARD
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemBlueShard =
 {
     gItemBlueShardGfx,
     64*64/2,
-    TAG_ITEM_BLUE_SHARD
+    MINING_TAG_ITEM_BLUE_SHARD
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemYellowShard =
 {
     gItemYellowShardGfx,
     64*64/2,
-    TAG_ITEM_YELLOW_SHARD
+    MINING_TAG_ITEM_YELLOW_SHARD
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemGreenShard =
 {
     gItemGreenShardGfx,
     64*64/2,
-    TAG_ITEM_GREEN_SHARD
+    MINING_TAG_ITEM_GREEN_SHARD
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemIronBall =
 {
     gItemIronBallGfx,
     64*64/2,
-    TAG_ITEM_IRON_BALL
+    MINING_TAG_ITEM_IRON_BALL
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemReviveMax =
 {
     gItemReviveMaxGfx,
     64*64/2,
-    TAG_ITEM_REVIVE_MAX
+    MINING_TAG_ITEM_REVIVE_MAX
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemEverStone =
 {
     gItemEverStoneGfx,
     64*64/2,
-    TAG_ITEM_EVER_STONE
+    MINING_TAG_ITEM_EVER_STONE
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemOvalStone =
 {
     gItemOvalStoneGfx,
     64*64/2,
-    TAG_ITEM_OVAL_STONE
+    MINING_TAG_ITEM_OVAL_STONE
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemLightClay =
 {
     gItemLightClayGfx,
     64*64/2,
-    TAG_ITEM_LIGHT_CLAY
+    MINING_TAG_ITEM_LIGHT_CLAY
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemHeatRock =
 {
     gItemHeatRockGfx,
     64*64/2,
-    TAG_ITEM_HEAT_ROCK,
+    MINING_TAG_ITEM_HEAT_ROCK,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemIcyRock =
 {
     gItemIcyRockGfx,
     64*64/2,
-    TAG_ITEM_ICY_ROCK,
+    MINING_TAG_ITEM_ICY_ROCK,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemSmoothRock =
 {
     gItemSmoothRockGfx,
     64*64/2,
-    TAG_ITEM_SMOOTH_ROCK,
+    MINING_TAG_ITEM_SMOOTH_ROCK,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemLeafStone =
 {
     gItemLeafStoneGfx,
     64*64/2,
-    TAG_ITEM_LEAF_STONE,
+    MINING_TAG_ITEM_LEAF_STONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemFireStone =
 {
     gItemFireStoneGfx,
     64*64/2,
-    TAG_ITEM_FIRE_STONE,
+    MINING_TAG_ITEM_FIRE_STONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemWaterStone =
 {
     gItemWaterStoneGfx,
     64*64/2,
-    TAG_ITEM_WATER_STONE,
+    MINING_TAG_ITEM_WATER_STONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemThunderStone =
 {
     gItemThunderStoneGfx,
     64*64/2,
-    TAG_ITEM_THUNDER_STONE,
+    MINING_TAG_ITEM_THUNDER_STONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemMoonStone =
 {
     gItemMoonStoneGfx,
     64*64/2,
-    TAG_ITEM_MOON_STONE,
+    MINING_TAG_ITEM_MOON_STONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemSunStone =
 {
     gItemSunStoneGfx,
     64*64/2,
-    TAG_ITEM_SUN_STONE,
+    MINING_TAG_ITEM_SUN_STONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemOddKeyStone =
 {
     gItemOddKeyStoneGfx,
     64*64/2,
-    TAG_ITEM_ODD_KEY_STONE,
+    MINING_TAG_ITEM_ODD_KEY_STONE,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemSkullFossil =
 {
     gItemSkullFossilGfx,
     64*64/2,
-    TAG_ITEM_SKULL_FOSSIL,
+    MINING_TAG_ITEM_SKULL_FOSSIL,
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_ItemArmorFossil =
 {
     gItemArmorFossilGfx,
     64*64/2,
-    TAG_ITEM_ARMOR_FOSSIL,
+    MINING_TAG_ITEM_ARMOR_FOSSIL,
 };
 
 static const struct SpriteTemplate gSpriteStone1x4 =
 {
-    .tileTag = TAG_STONE_1X4,
-    .paletteTag = TAG_STONE_1X4,
+    .tileTag = MINING_TAG_STONE_1X4,
+    .paletteTag = MINING_TAG_STONE_1X4,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -967,8 +967,8 @@ static const struct SpriteTemplate gSpriteStone1x4 =
 
 static const struct SpriteTemplate gSpriteStone4x1 =
 {
-    .tileTag = TAG_STONE_4X1,
-    .paletteTag = TAG_STONE_4X1,
+    .tileTag = MINING_TAG_STONE_4X1,
+    .paletteTag = MINING_TAG_STONE_4X1,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -978,8 +978,8 @@ static const struct SpriteTemplate gSpriteStone4x1 =
 
 static const struct SpriteTemplate gSpriteStone2x4 =
 {
-    .tileTag = TAG_STONE_2X4,
-    .paletteTag = TAG_STONE_2X4,
+    .tileTag = MINING_TAG_STONE_2X4,
+    .paletteTag = MINING_TAG_STONE_2X4,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -989,8 +989,8 @@ static const struct SpriteTemplate gSpriteStone2x4 =
 
 static const struct SpriteTemplate gSpriteStone4x2 =
 {
-    .tileTag = TAG_STONE_4X2,
-    .paletteTag = TAG_STONE_4X2,
+    .tileTag = MINING_TAG_STONE_4X2,
+    .paletteTag = MINING_TAG_STONE_4X2,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -1000,8 +1000,8 @@ static const struct SpriteTemplate gSpriteStone4x2 =
 
 static const struct SpriteTemplate gSpriteStone2x2 =
 {
-    .tileTag = TAG_STONE_2X2,
-    .paletteTag = TAG_STONE_2X2,
+    .tileTag = MINING_TAG_STONE_2X2,
+    .paletteTag = MINING_TAG_STONE_2X2,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -1011,8 +1011,8 @@ static const struct SpriteTemplate gSpriteStone2x2 =
 
 static const struct SpriteTemplate gSpriteStone3x3 =
 {
-    .tileTag = TAG_STONE_3X3,
-    .paletteTag = TAG_STONE_3X3,
+    .tileTag = MINING_TAG_STONE_3X3,
+    .paletteTag = MINING_TAG_STONE_3X3,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -1022,8 +1022,8 @@ static const struct SpriteTemplate gSpriteStone3x3 =
 
 static const struct SpriteTemplate gSpriteStoneSnake1 =
 {
-    .tileTag = TAG_STONE_SNAKE1,
-    .paletteTag = TAG_STONE_SNAKE1,
+    .tileTag = MINING_TAG_STONE_SNAKE1,
+    .paletteTag = MINING_TAG_STONE_SNAKE1,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -1033,8 +1033,8 @@ static const struct SpriteTemplate gSpriteStoneSnake1 =
 
 static const struct SpriteTemplate gSpriteStoneSnake2 =
 {
-    .tileTag = TAG_STONE_SNAKE2,
-    .paletteTag = TAG_STONE_SNAKE2,
+    .tileTag = MINING_TAG_STONE_SNAKE2,
+    .paletteTag = MINING_TAG_STONE_SNAKE2,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -1044,8 +1044,8 @@ static const struct SpriteTemplate gSpriteStoneSnake2 =
 
 static const struct SpriteTemplate gSpriteStoneMushroom1 =
 {
-    .tileTag = TAG_STONE_MUSHROOM1,
-    .paletteTag = TAG_STONE_MUSHROOM1,
+    .tileTag = MINING_TAG_STONE_MUSHROOM1,
+    .paletteTag = MINING_TAG_STONE_MUSHROOM1,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -1055,8 +1055,8 @@ static const struct SpriteTemplate gSpriteStoneMushroom1 =
 
 static const struct SpriteTemplate gSpriteStoneMushroom2 =
 {
-    .tileTag = TAG_STONE_MUSHROOM2,
-    .paletteTag = TAG_STONE_MUSHROOM2,
+    .tileTag = MINING_TAG_STONE_MUSHROOM2,
+    .paletteTag = MINING_TAG_STONE_MUSHROOM2,
     .oam = &gOamItem64x64,
     .anims = gDummySpriteAnimTable,
     .images = NULL,
@@ -1087,9 +1087,9 @@ struct MiningStone
 
 static const struct MiningItem MiningItemList[] =
 {
-    [ITEMID_NONE] = 
+    [MININGID_NONE] = 
     {
-        .miningItemId = ITEMID_NONE,
+        .miningItemId = MININGID_NONE,
         .bagItemId = 0,
         .top = 0,
         .left = 0,
@@ -1098,289 +1098,289 @@ static const struct MiningItem MiningItemList[] =
         .sheet = NULL,
         .paldata = NULL,
     },
-    [ITEMID_HARD_STONE] = 
+    [MININGID_HARD_STONE] = 
     {
-        .miningItemId = ITEMID_HARD_STONE,
+        .miningItemId = MININGID_HARD_STONE,
         .bagItemId = ITEM_HARD_STONE,
         .top = 1,
         .left = 1,
         .totalTiles = 3,
-        .tag = TAG_ITEM_HARDSTONE,
+        .tag = MINING_TAG_ITEM_HARDSTONE,
         .sheet = &sSpriteSheet_ItemHardStone,
         .paldata = gItemHardStonePal,
     },
-    [ITEMID_REVIVE] = 
+    [MININGID_REVIVE] = 
     {
-        .miningItemId = ITEMID_REVIVE,
+        .miningItemId = MININGID_REVIVE,
         .bagItemId = ITEM_REVIVE,
         .top = 2,
         .left = 2,
         .totalTiles = 4,
-        .tag = TAG_ITEM_REVIVE,
+        .tag = MINING_TAG_ITEM_REVIVE,
         .sheet = &sSpriteSheet_ItemRevive,
         .paldata = gItemRevivePal,
     },
-    [ITEMID_STAR_PIECE] = 
+    [MININGID_STAR_PIECE] = 
     {
-        .miningItemId = ITEMID_STAR_PIECE,
+        .miningItemId = MININGID_STAR_PIECE,
         .bagItemId = ITEM_STAR_PIECE,
         .top = 2,
         .left = 2,
         .totalTiles = 4,
-        .tag = TAG_ITEM_STAR_PIECE,
+        .tag = MINING_TAG_ITEM_STAR_PIECE,
         .sheet = &sSpriteSheet_ItemStarPiece,
         .paldata = gItemStarPiecePal,
     },
-    [ITEMID_DAMP_ROCK] = 
+    [MININGID_DAMP_ROCK] = 
     {
-        .miningItemId = ITEMID_DAMP_ROCK,
+        .miningItemId = MININGID_DAMP_ROCK,
         .bagItemId = ITEM_DAMP_ROCK,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
-        .tag = TAG_ITEM_DAMP_ROCK,
+        .tag = MINING_TAG_ITEM_DAMP_ROCK,
         .sheet = &sSpriteSheet_ItemDampRock,
         .paldata = gItemDampRockPal,
     },
-    [ITEMID_RED_SHARD] = 
+    [MININGID_RED_SHARD] = 
     {
-        .miningItemId = ITEMID_RED_SHARD,
+        .miningItemId = MININGID_RED_SHARD,
         .bagItemId = ITEM_RED_SHARD,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
-        .tag = TAG_ITEM_RED_SHARD,
+        .tag = MINING_TAG_ITEM_RED_SHARD,
         .sheet = &sSpriteSheet_ItemRedShard,
         .paldata = gItemRedShardPal,
     },
-    [ITEMID_BLUE_SHARD] = 
+    [MININGID_BLUE_SHARD] = 
     {
-        .miningItemId = ITEMID_BLUE_SHARD,
+        .miningItemId = MININGID_BLUE_SHARD,
         .bagItemId = ITEM_BLUE_SHARD,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
-        .tag = TAG_ITEM_BLUE_SHARD,
+        .tag = MINING_TAG_ITEM_BLUE_SHARD,
         .sheet = &sSpriteSheet_ItemBlueShard,
         .paldata = gItemBlueShardPal,
     },
-    [ITEMID_YELLOW_SHARD] = 
+    [MININGID_YELLOW_SHARD] = 
     {
-        .miningItemId = ITEMID_YELLOW_SHARD,
+        .miningItemId = MININGID_YELLOW_SHARD,
         .bagItemId = ITEM_YELLOW_SHARD,
         .top = 2,
         .left = 3,
         .totalTiles = 8,
-        .tag = TAG_ITEM_YELLOW_SHARD,
+        .tag = MINING_TAG_ITEM_YELLOW_SHARD,
         .sheet = &sSpriteSheet_ItemYellowShard,
         .paldata = gItemYellowShardPal,
     },
-    [ITEMID_GREEN_SHARD] = 
+    [MININGID_GREEN_SHARD] = 
     {
-        .miningItemId = ITEMID_GREEN_SHARD,
+        .miningItemId = MININGID_GREEN_SHARD,
         .bagItemId = ITEM_GREEN_SHARD,
         .top = 2,
         .left = 3,
         .totalTiles = 10,
-        .tag = TAG_ITEM_GREEN_SHARD,
+        .tag = MINING_TAG_ITEM_GREEN_SHARD,
         .sheet = &sSpriteSheet_ItemGreenShard,
         .paldata = gItemGreenShardPal,
     },
-    [ITEMID_IRON_BALL] = 
+    [MININGID_IRON_BALL] = 
     {
-        .miningItemId = ITEMID_IRON_BALL,
+        .miningItemId = MININGID_IRON_BALL,
         .bagItemId = ITEM_IRON_BALL,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
-        .tag = TAG_ITEM_IRON_BALL,
+        .tag = MINING_TAG_ITEM_IRON_BALL,
         .sheet = &sSpriteSheet_ItemIronBall,
         .paldata = gItemIronBallPal,
     },
-    [ITEMID_REVIVE_MAX] = 
+    [MININGID_REVIVE_MAX] = 
     {
-        .miningItemId = ITEMID_REVIVE_MAX,
+        .miningItemId = MININGID_REVIVE_MAX,
         .bagItemId = ITEM_MAX_REVIVE,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
-        .tag = TAG_ITEM_REVIVE_MAX,
+        .tag = MINING_TAG_ITEM_REVIVE_MAX,
         .sheet = &sSpriteSheet_ItemReviveMax,
         .paldata = gItemReviveMaxPal,
     },
-    [ITEMID_EVER_STONE] = 
+    [MININGID_EVER_STONE] = 
     {
-        .miningItemId = ITEMID_EVER_STONE,
+        .miningItemId = MININGID_EVER_STONE,
         .bagItemId = ITEM_EVERSTONE,
         .top = 1,
         .left = 3,
         .totalTiles = 7,
-        .tag = TAG_ITEM_EVER_STONE,
+        .tag = MINING_TAG_ITEM_EVER_STONE,
         .sheet = &sSpriteSheet_ItemEverStone,
         .paldata = gItemEverStonePal,
     },
-    [ITEMID_HEART_SCALE] = 
+    [MININGID_HEART_SCALE] = 
     {
-        .miningItemId = ITEMID_HEART_SCALE,
+        .miningItemId = MININGID_HEART_SCALE,
         .bagItemId = ITEM_HEART_SCALE,
         .top = 1,
         .left = 1,
         .totalTiles = 2,
-        .tag = TAG_ITEM_HEARTSCALE,
+        .tag = MINING_TAG_ITEM_HEARTSCALE,
         .sheet = &sSpriteSheet_ItemHeartScale,
         .paldata = gItemHeartScalePal,
     },
-    [ITEMID_OVAL_STONE] = 
+    [MININGID_OVAL_STONE] = 
     {
-        .miningItemId = ITEMID_OVAL_STONE,
+        .miningItemId = MININGID_OVAL_STONE,
         .bagItemId = ITEM_OVAL_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
-        .tag = TAG_ITEM_OVAL_STONE,
+        .tag = MINING_TAG_ITEM_OVAL_STONE,
         .sheet = &sSpriteSheet_ItemOvalStone,
         .paldata = gItemOvalStonePal,
     },
-    [ITEMID_LIGHT_CLAY] = 
+    [MININGID_LIGHT_CLAY] = 
     {
-        .miningItemId = ITEMID_LIGHT_CLAY,
+        .miningItemId = MININGID_LIGHT_CLAY,
         .bagItemId = ITEM_LIGHT_CLAY,
         .top = 3,
         .left = 3,
         .totalTiles = 10,
-        .tag = TAG_ITEM_LIGHT_CLAY,
+        .tag = MINING_TAG_ITEM_LIGHT_CLAY,
         .sheet = &sSpriteSheet_ItemLightClay,
         .paldata = gItemLightClayPal,
     },
-    [ITEMID_HEAT_ROCK] = 
+    [MININGID_HEAT_ROCK] = 
     {
-        .miningItemId = ITEMID_HEAT_ROCK,
+        .miningItemId = MININGID_HEAT_ROCK,
         .bagItemId = ITEM_HEAT_ROCK,
         .top = 2,
         .left = 3,
         .totalTiles = 9,
-        .tag = TAG_ITEM_HEAT_ROCK,
+        .tag = MINING_TAG_ITEM_HEAT_ROCK,
         .sheet = &sSpriteSheet_ItemHeatRock,
         .paldata = gItemHeatRockPal,
     },
-    [ITEMID_ICY_ROCK] = 
+    [MININGID_ICY_ROCK] = 
     {
-        .miningItemId = ITEMID_ICY_ROCK,
+        .miningItemId = MININGID_ICY_ROCK,
         .bagItemId = ITEM_ICY_ROCK,
         .top = 3,
         .left = 3,
         .totalTiles = 11,
-        .tag = TAG_ITEM_ICY_ROCK,
+        .tag = MINING_TAG_ITEM_ICY_ROCK,
         .sheet = &sSpriteSheet_ItemIcyRock,
         .paldata = gItemIcyRockPal,
     },
-    [ITEMID_SMOOTH_ROCK] = 
+    [MININGID_SMOOTH_ROCK] = 
     {
-        .miningItemId = ITEMID_SMOOTH_ROCK,
+        .miningItemId = MININGID_SMOOTH_ROCK,
         .bagItemId = ITEM_SMOOTH_ROCK,
         .top = 3,
         .left = 3,
         .totalTiles = 7,
-        .tag = TAG_ITEM_SMOOTH_ROCK,
+        .tag = MINING_TAG_ITEM_SMOOTH_ROCK,
         .sheet = &sSpriteSheet_ItemSmoothRock,
         .paldata = gItemSmoothRockPal,
     },
-    [ITEMID_LEAF_STONE] = 
+    [MININGID_LEAF_STONE] = 
     {
-        .miningItemId = ITEMID_LEAF_STONE,
+        .miningItemId = MININGID_LEAF_STONE,
         .bagItemId = ITEM_LEAF_STONE,
         .top = 3,
         .left = 2,
         .totalTiles = 7,
-        .tag = TAG_ITEM_LEAF_STONE,
+        .tag = MINING_TAG_ITEM_LEAF_STONE,
         .sheet = &sSpriteSheet_ItemLeafStone,
         .paldata = gItemLeafStonePal,
     },
-    [ITEMID_FIRE_STONE] =
+    [MININGID_FIRE_STONE] =
     {
-        .miningItemId = ITEMID_FIRE_STONE,
+        .miningItemId = MININGID_FIRE_STONE,
         .bagItemId = ITEM_FIRE_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 8,
-        .tag = TAG_ITEM_FIRE_STONE,
+        .tag = MINING_TAG_ITEM_FIRE_STONE,
         .sheet = &sSpriteSheet_ItemFireStone,
         .paldata = gItemFireStonePal,
     },
-    [ITEMID_WATER_STONE] = 
+    [MININGID_WATER_STONE] = 
     {
-        .miningItemId = ITEMID_WATER_STONE,
+        .miningItemId = MININGID_WATER_STONE,
         .bagItemId = ITEM_WATER_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 7,
-        .tag = TAG_ITEM_WATER_STONE,
+        .tag = MINING_TAG_ITEM_WATER_STONE,
         .sheet = &sSpriteSheet_ItemWaterStone,
         .paldata = gItemWaterStonePal,
     },
-    [ITEMID_THUNDER_STONE] = 
+    [MININGID_THUNDER_STONE] = 
     {
-        .miningItemId = ITEMID_THUNDER_STONE,
+        .miningItemId = MININGID_THUNDER_STONE,
         .bagItemId = ITEM_THUNDER_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 6,
-        .tag = TAG_ITEM_THUNDER_STONE,
+        .tag = MINING_TAG_ITEM_THUNDER_STONE,
         .sheet = &sSpriteSheet_ItemThunderStone,
         .paldata = gItemThunderStonePal,
     },
-    [ITEMID_MOON_STONE] = 
+    [MININGID_MOON_STONE] = 
     {
-        .miningItemId = ITEMID_MOON_STONE,
+        .miningItemId = MININGID_MOON_STONE,
         .bagItemId = ITEM_MOON_STONE,
         .top = 1,
         .left = 3,
         .totalTiles = 5,
-        .tag = TAG_ITEM_MOON_STONE,
+        .tag = MINING_TAG_ITEM_MOON_STONE,
         .sheet = &sSpriteSheet_ItemMoonStone,
         .paldata = gItemMoonStonePal,
     },
-    [ITEMID_SUN_STONE] = 
+    [MININGID_SUN_STONE] = 
     {
-        .miningItemId = ITEMID_SUN_STONE,
+        .miningItemId = MININGID_SUN_STONE,
         .bagItemId = ITEM_SUN_STONE,
         .top = 2,
         .left = 2,
         .totalTiles = 6,
-        .tag = TAG_ITEM_SUN_STONE,
+        .tag = MINING_TAG_ITEM_SUN_STONE,
         .sheet = &sSpriteSheet_ItemSunStone,
         .paldata = gItemSunStonePal,
     },
-    [ITEMID_ODD_KEY_STONE] = 
+    [MININGID_ODD_KEY_STONE] = 
     {
-        .miningItemId = ITEMID_ODD_KEY_STONE,
+        .miningItemId = MININGID_ODD_KEY_STONE,
         .bagItemId = ITEM_ODD_KEYSTONE,
         .top = 3,
         .left = 3,
         .totalTiles = 15,
-        .tag = TAG_ITEM_ODD_KEY_STONE,
+        .tag = MINING_TAG_ITEM_ODD_KEY_STONE,
         .sheet = &sSpriteSheet_ItemOddKeyStone,
         .paldata = gItemOddKeyStonePal,
     },
-    [ITEMID_SKULL_FOSSIL] = 
+    [MININGID_SKULL_FOSSIL] = 
     {
-        .miningItemId = ITEMID_SKULL_FOSSIL,
+        .miningItemId = MININGID_SKULL_FOSSIL,
         .bagItemId = ITEM_SKULL_FOSSIL,
         .top = 3,
         .left = 3,
         .totalTiles = 13,
-        .tag = TAG_ITEM_SKULL_FOSSIL,
+        .tag = MINING_TAG_ITEM_SKULL_FOSSIL,
         .sheet = &sSpriteSheet_ItemSkullFossil,
         .paldata = gItemFossilPal,
     },
-    [ITEMID_ARMOR_FOSSIL] = 
+    [MININGID_ARMOR_FOSSIL] = 
     {
-        .miningItemId = ITEMID_ARMOR_FOSSIL,
+        .miningItemId = MININGID_ARMOR_FOSSIL,
         .bagItemId = ITEM_ARMOR_FOSSIL,
         .top = 3,
         .left = 3,
         .totalTiles = 15,
-        .tag = TAG_ITEM_ARMOR_FOSSIL,
+        .tag = MINING_TAG_ITEM_ARMOR_FOSSIL,
         .sheet = &sSpriteSheet_ItemArmorFossil,
         .paldata = gItemFossilPal,
     },
@@ -1388,70 +1388,70 @@ static const struct MiningItem MiningItemList[] =
 
 static const struct MiningStone MiningStoneList[] = 
 {
-    [ID_STONE_1x4] = 
+    [MININGID_STONE_1x4] = 
     {
         .top = 3,
         .left = 0,
         .width = 1,
         .height = 4,
     },
-    [ID_STONE_4x1] = 
+    [MININGID_STONE_4x1] = 
     {
         .top = 0,
         .left = 3,
         .width = 4,
         .height = 1,
     },
-    [ID_STONE_2x4] = 
+    [MININGID_STONE_2x4] = 
     {
         .top = 3,
         .left = 1,
         .width = 2,
         .height = 4,
     },
-    [ID_STONE_4x2] = 
+    [MININGID_STONE_4x2] = 
     {
         .top = 1,
         .left = 3,
         .width = 4,
         .height = 2,
     },
-    [ID_STONE_2x2] = 
+    [MININGID_STONE_2x2] = 
     {
         .top = 1,
         .left = 1,
         .width = 2,
         .height = 2,
     },
-    [ID_STONE_3x3] = 
+    [MININGID_STONE_3x3] = 
     {
         .top = 2,
         .left = 2,
         .width = 3,
         .height = 3,
     },
-    [ID_STONE_SNAKE1] = 
+    [MININGID_STONE_SNAKE1] = 
     {
         .top = 1,
         .left = 2,
         .width = 3,
         .height = 2,
     },
-    [ID_STONE_SNAKE2] = 
+    [MININGID_STONE_SNAKE2] = 
     {
         .top = 1,
         .left = 2,
         .width = 3,
         .height = 2,
     },
-    [ID_STONE_MUSHROOM1] = 
+    [MININGID_STONE_MUSHROOM1] = 
     {
         .top = 1,
         .left = 2,
         .width = 3,
         .height = 2,
     },
-    [ID_STONE_MUSHROOM2] = 
+    [MININGID_STONE_MUSHROOM2] = 
     {
         .top = 1,
         .left = 2,
@@ -1597,18 +1597,17 @@ enum
     STATE_QUIT,
 };
 
-// TODO: Rename this to `stress level` or something. The drug is not on a pos lmao
 enum 
 {
-    CRACK_POS_0,
-    CRACK_POS_1,
-    CRACK_POS_2,
-    CRACK_POS_3,
-    CRACK_POS_4,
-    CRACK_POS_5,
-    CRACK_POS_6,
-    CRACK_POS_7,
-    CRACK_POS_MAX,
+    STRESS_LEVEL_POS_0,
+    STRESS_LEVEL_POS_1,
+    STRESS_LEVEL_POS_2,
+    STRESS_LEVEL_POS_3,
+    STRESS_LEVEL_POS_4,
+    STRESS_LEVEL_POS_5,
+    STRESS_LEVEL_POS_6,
+    STRESS_LEVEL_POS_7,
+    STRESS_LEVEL_POS_MAX,
 };
 
 static void Mining_SetupCB(void) 
@@ -1736,8 +1735,7 @@ static void Mining_MainCB(void)
     DoScheduledBgTilemapCopiesToVram();
 }
 
-// TODO: Rename this to `move sprite` or something similar. This does not shake the sprite
-static void ShakeSprite(s16 dx, s16 dy) 
+static void MoveItemSprites(s16 dx, s16 dy) 
 {
     u32 i;
 
@@ -1760,7 +1758,7 @@ static void MiningUi_Shake(u8 taskId)
             if (!IsCrackMax() && Random() % 100 < 20) { // 20 % chance of not shaking the screen
                 sMiningUiState->toggleShakeDuringAnimation = TRUE;  
             }
-            ShakeSprite(-1, 1);
+            MoveItemSprites(-1, 1);
             sMiningUiState->shakeState++;
             break;
         case 1:
@@ -1774,7 +1772,7 @@ static void MiningUi_Shake(u8 taskId)
             sMiningUiState->shakeState++;
             break;
         case 3: // Right 2 - Up 2
-            ShakeSprite(3, -3);
+            MoveItemSprites(3, -3);
             gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
             gSprites[sMiningUiState->ShakeHitTool].invisible = 1;
             sMiningUiState->shakeState++;
@@ -1790,7 +1788,7 @@ static void MiningUi_Shake(u8 taskId)
             sMiningUiState->shakeState++;
             break;
         case 6: // Down 2
-            ShakeSprite(-2, 4);
+            MoveItemSprites(-2, 4);
             if (!IsCrackMax()) 
             {
                 gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
@@ -1809,7 +1807,7 @@ static void MiningUi_Shake(u8 taskId)
             sMiningUiState->shakeState++;
             break;
         case 9: // Left 2 - Up 2
-            ShakeSprite(-2, -4);
+            MoveItemSprites(-2, -4);
             gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
             sMiningUiState->shakeState++;
             break;
@@ -1824,7 +1822,7 @@ static void MiningUi_Shake(u8 taskId)
             sMiningUiState->shakeState++;
             break;
         case 12: // Right 1 - Down 1
-            ShakeSprite(3, 3);
+            MoveItemSprites(3, 3);
             if (!IsCrackMax()) 
             {
                 gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
@@ -1844,7 +1842,7 @@ static void MiningUi_Shake(u8 taskId)
             sMiningUiState->shakeState++;
             break;
         case 15:
-            ShakeSprite(-1, -1);
+            MoveItemSprites(-1, -1);
             //if (!IsCrackMax())
             //  gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
             sMiningUiState->shakeState++;
@@ -1955,7 +1953,7 @@ static void ClearItemMap(void)
 
     for (i=0; i < 96; i++) 
     {
-        sMiningUiState->itemMap[i] = ITEM_TILE_NONE;
+        sMiningUiState->itemMap[i] = MINING_ITEM_TILE_NONE;
     }
 }
 
@@ -1965,40 +1963,40 @@ static void ClearItemMap(void)
 
 static const u32 ItemRarityTable_Common[] = 
 {
-    ITEMID_HEART_SCALE,
-    ITEMID_RED_SHARD,
-    ITEMID_BLUE_SHARD,
-    ITEMID_YELLOW_SHARD,
-    ITEMID_GREEN_SHARD,
+    MININGID_HEART_SCALE,
+    MININGID_RED_SHARD,
+    MININGID_BLUE_SHARD,
+    MININGID_YELLOW_SHARD,
+    MININGID_GREEN_SHARD,
 };
 
 static const u32 ItemRarityTable_Uncommon[] = 
 {
-    ITEMID_IRON_BALL,
-    ITEMID_HARD_STONE,
-    ITEMID_REVIVE,
-    ITEMID_EVER_STONE,
+    MININGID_IRON_BALL,
+    MININGID_HARD_STONE,
+    MININGID_REVIVE,
+    MININGID_EVER_STONE,
 };
 
 static const u32 ItemRarityTable_Rare[] = 
 {
-    ITEMID_STAR_PIECE,
-    ITEMID_DAMP_ROCK,
-    ITEMID_HEAT_ROCK,
-    ITEMID_REVIVE_MAX,
-    ITEMID_OVAL_STONE,
-    ITEMID_LIGHT_CLAY,
-    ITEMID_ICY_ROCK,
-    ITEMID_SMOOTH_ROCK,
-    ITEMID_LEAF_STONE,
-    ITEMID_FIRE_STONE,
-    ITEMID_WATER_STONE,
-    ITEMID_THUNDER_STONE,
-    ITEMID_MOON_STONE,
-    ITEMID_SUN_STONE,
-    ITEMID_ODD_KEY_STONE,
-    ITEMID_SKULL_FOSSIL,
-    ITEMID_ARMOR_FOSSIL,
+    MININGID_STAR_PIECE,
+    MININGID_DAMP_ROCK,
+    MININGID_HEAT_ROCK,
+    MININGID_REVIVE_MAX,
+    MININGID_OVAL_STONE,
+    MININGID_LIGHT_CLAY,
+    MININGID_ICY_ROCK,
+    MININGID_SMOOTH_ROCK,
+    MININGID_LEAF_STONE,
+    MININGID_FIRE_STONE,
+    MININGID_WATER_STONE,
+    MININGID_THUNDER_STONE,
+    MININGID_MOON_STONE,
+    MININGID_SUN_STONE,
+    MININGID_ODD_KEY_STONE,
+    MININGID_SKULL_FOSSIL,
+    MININGID_ARMOR_FOSSIL,
 };
 
 static u8 GetRandomItemId() 
@@ -2045,7 +2043,7 @@ static void Mining_LoadSpriteGraphics(void)
 {
     u32 i;
     u8 itemId1, itemId2, itemId3, itemId4;
-    u32 stone = ITEMID_NONE;
+    u32 stone = MININGID_NONE;
     struct ComfyAnimSpringConfig animConfigX, animConfigY;
 
     // -- X values --
@@ -2101,11 +2099,11 @@ static void Mining_LoadSpriteGraphics(void)
         DoDrawRandomItem(4, itemId4);
     }
 
-    for (i=0; i<COUNT_MAX_NUMBER_STONES; i++) 
+    for (i=0; i<MINING_COUNT_MAX_NUMBER_STONES; i++) 
     {
-        stone = ITEMID_NONE;
+        stone = MININGID_NONE;
         while (!DoesStoneFitInItemMap(stone))
-            stone = ((Random() % COUNT_ID_STONE) + ID_STONE_1x4);
+            stone = ((Random() % MINING_COUNT_ID_STONE) + MININGID_STONE_1x4);
 
         stone = Debug_DetermineStoneSize(stone,i);
         DoDrawRandomStone(stone);
@@ -2149,7 +2147,7 @@ static void Task_MiningMainInput(u8 taskId)
     if (gMain.newKeys & A_BUTTON && !sMiningUiState->shouldShake)  
     {
         Mining_UpdateTerrain();
-        Mining_UpdateCracks();
+        Mining_UpdateStressLevel();
         ScheduleBgCopyTilemapToVram(2);
         DoScheduledBgTilemapCopiesToVram();
         BuildOamBuffer();
@@ -2212,9 +2210,8 @@ static void Task_MiningMainInput(u8 taskId)
 //
 // NOTE TO MY FUTURE SELF: The crack updating
 //
-// TODO: Rename to `stress level`
-// TODO: Maybe rewrite this shit into a table or something that is used by one function
-static void Crack_DrawCrack_0(u8 ofs, u8 ofs2, u16* ptr) 
+// Maybe TODO: Maybe rewrite this shit into a table or something that is used by one function
+static void StressLevel_Draw_0(u8 ofs, u8 ofs2, u16* ptr) 
 {
     OverwriteTileDataInTilemapBuffer(0x07, 21 - ofs * 4 + ofs2, 1, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x08, 22 - ofs * 4 + ofs2, 1, ptr, 0x01);
@@ -2224,7 +2221,7 @@ static void Crack_DrawCrack_0(u8 ofs, u8 ofs2, u16* ptr)
     OverwriteTileDataInTilemapBuffer(0x14, 23 - ofs * 4 + ofs2, 3, ptr, 0x01);
 }
 
-static void Crack_DrawCrack_1(u8 ofs, u8 ofs2, u16* ptr) 
+static void StressLevel_Draw_1(u8 ofs, u8 ofs2, u16* ptr) 
 {
     OverwriteTileDataInTilemapBuffer(0x17, 21 - ofs * 4 + ofs2, 0, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x18, 22 - ofs * 4 + ofs2, 0, ptr, 0x01);
@@ -2236,7 +2233,7 @@ static void Crack_DrawCrack_1(u8 ofs, u8 ofs2, u16* ptr)
     OverwriteTileDataInTilemapBuffer(0x26, 23 - ofs * 4 + ofs2, 3, ptr, 0x01);
 }
 
-static void Crack_DrawCrack_2(u8 ofs, u8 ofs2, u16* ptr) 
+static void StressLevel_Draw_2(u8 ofs, u8 ofs2, u16* ptr) 
 {
     OverwriteTileDataInTilemapBuffer(0x27, 20 - ofs * 4 + ofs2, 0, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x28, 21 - ofs * 4 + ofs2, 0, ptr, 0x01);
@@ -2251,9 +2248,9 @@ static void Crack_DrawCrack_2(u8 ofs, u8 ofs2, u16* ptr)
     OverwriteTileDataInTilemapBuffer(0x26, 23 - ofs * 4 + ofs2, 3, ptr, 0x01);
 }
 
-static void Crack_DrawCrack_3(u8 ofs, u8 ofs2, u16* ptr) 
+static void StressLevel_Draw_3(u8 ofs, u8 ofs2, u16* ptr) 
 {
-    // Clean up 0x27, 0x28 and 0x29 from Crack_DrawCrack_2
+    // Clean up 0x27, 0x28 and 0x29 from StressLevel_Draw_2
     OverwriteTileDataInTilemapBuffer(0x00, 20 - ofs * 4 + ofs2, 0, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x00, 21 - ofs * 4 + ofs2, 0, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x00, 22 - ofs * 4 + ofs2, 0, ptr, 0x01);
@@ -2270,9 +2267,9 @@ static void Crack_DrawCrack_3(u8 ofs, u8 ofs2, u16* ptr)
     OverwriteTileDataInTilemapBuffer(0x26, 23 - ofs * 4 + ofs2, 3, ptr, 0x01);
 }
 
-static void Crack_DrawCrack_4(u8 ofs, u8 ofs2, u16* ptr) 
+static void StressLevel_Draw_4(u8 ofs, u8 ofs2, u16* ptr) 
 {
-    // The same clean up as Crack_DrawCrack_3 but only used when the hammer is used
+    // The same clean up as StressLevel_Draw_3 but only used when the hammer is used
     OverwriteTileDataInTilemapBuffer(0x00, 20 - ofs * 4 + ofs2, 0, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x00, 21 - ofs * 4 + ofs2, 0, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x00, 22 - ofs * 4 + ofs2, 0, ptr, 0x01);
@@ -2293,7 +2290,7 @@ static void Crack_DrawCrack_4(u8 ofs, u8 ofs2, u16* ptr)
     OverwriteTileDataInTilemapBuffer(0x26, 23 - ofs * 4 + ofs2, 3, ptr, 0x01);
 }
 
-static void Crack_DrawCrack_5(u8 ofs, u8 ofs2, u16* ptr) 
+static void StressLevel_Draw_5(u8 ofs, u8 ofs2, u16* ptr) 
 {
     OverwriteTileDataInTilemapBuffer(0x43, 20 - ofs * 4 + ofs2, 1, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x44, 21 - ofs * 4 + ofs2, 1, ptr, 0x01);
@@ -2310,9 +2307,9 @@ static void Crack_DrawCrack_5(u8 ofs, u8 ofs2, u16* ptr)
     OverwriteTileDataInTilemapBuffer(0x26, 23 - ofs * 4 + ofs2, 3, ptr, 0x01);
 }
 
-static void Crack_DrawCrack_6(u8 ofs, u8 ofs2, u16* ptr) 
+static void StressLevel_Draw_6(u8 ofs, u8 ofs2, u16* ptr) 
 {
-    // Clean up 0x48 and 0x49 from Crack_DrawCrack_5
+    // Clean up 0x48 and 0x49 from StressLevel_Draw_5
     OverwriteTileDataInTilemapBuffer(0x00, 19 - ofs * 4 + ofs2, 3, ptr, 0x01);
     OverwriteTileDataInTilemapBuffer(0x00, 20 - ofs * 4 + ofs2, 3, ptr, 0x01);
 
@@ -2337,14 +2334,13 @@ static void Crack_DrawCrack_6(u8 ofs, u8 ofs2, u16* ptr)
 //      - `ofs2` represents the offset to the right side of the screen which is needed, to make the indicator flow smoothly.
 //      `offsetIn8`: `1 = 32 px` or `1 = 4x 8x8 tiles` afaik
 //      `ofs2`:      `1 = 8 px` or `1 = 8x8 tile`
-// TODO: Rename to `stress level`
-static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr) 
+static void StressLevel_UpdateRelativeToFramePos(u8 offsetIn8, u8 ofs2, u16* ptr) 
 {
     switch (sMiningUiState->stressLevelCount) 
     {   
         // TODO: write a function that handles the repeating pattern in the switch cases
         case 0:
-            Crack_DrawCrack_0(offsetIn8, ofs2, ptr);
+            StressLevel_Draw_0(offsetIn8, ofs2, ptr);
             if (sMiningUiState->tool == 1) 
             {
                 sMiningUiState->stressLevelCount++;
@@ -2352,7 +2348,7 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
             sMiningUiState->stressLevelCount++;
             break;
         case 1:
-            Crack_DrawCrack_1(offsetIn8, ofs2, ptr);
+            StressLevel_Draw_1(offsetIn8, ofs2, ptr);
             if (sMiningUiState->tool == 1) 
             {
                 sMiningUiState->stressLevelCount++;
@@ -2360,7 +2356,7 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
             sMiningUiState->stressLevelCount++;
             break;
         case 2:
-            Crack_DrawCrack_2(offsetIn8, ofs2, ptr);
+            StressLevel_Draw_2(offsetIn8, ofs2, ptr);
             if (sMiningUiState->tool == 1) 
             {
                 sMiningUiState->stressLevelCount++;
@@ -2368,7 +2364,7 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
             sMiningUiState->stressLevelCount++;
             break;
         case 3:
-            Crack_DrawCrack_3(offsetIn8, ofs2, ptr);
+            StressLevel_Draw_3(offsetIn8, ofs2, ptr);
             if (sMiningUiState->tool == 1) 
             {
                 sMiningUiState->stressLevelCount++;
@@ -2376,7 +2372,7 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
             sMiningUiState->stressLevelCount++;
             break;
         case 4:
-            Crack_DrawCrack_4(offsetIn8, ofs2, ptr);
+            StressLevel_Draw_4(offsetIn8, ofs2, ptr);
             if (sMiningUiState->tool == 1) 
             {
                 sMiningUiState->stressLevelCount++;
@@ -2384,11 +2380,11 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
             sMiningUiState->stressLevelCount++;
             break;
         case 5:
-            Crack_DrawCrack_5(offsetIn8, ofs2, ptr);
+            StressLevel_Draw_5(offsetIn8, ofs2, ptr);
             sMiningUiState->stressLevelCount++;
             break;
         case 6:
-            Crack_DrawCrack_6(offsetIn8, ofs2, ptr);
+            StressLevel_Draw_6(offsetIn8, ofs2, ptr);
             if (sMiningUiState->stressLevelPos == 7) 
             {
                 OverwriteTileDataInTilemapBuffer(0x00, 18 - offsetIn8 * 4 + ofs2, 1, ptr, 0x01);
@@ -2405,35 +2401,34 @@ static void Crack_UpdateCracksRelativeToCrackPos(u8 offsetIn8, u8 ofs2, u16* ptr
 }
 
 // This is the function that is called to easily update the stress level indicator on the top of the screen.
-// TODO: Rename to `stress level`
-static void Mining_UpdateCracks(void) 
+static void Mining_UpdateStressLevel(void) 
 {
     u16 *ptr = GetBgTilemapBuffer(2);
     switch (sMiningUiState->stressLevelPos) 
     {
         case 0:
-            Crack_UpdateCracksRelativeToCrackPos(0, 0, ptr);
+            StressLevel_UpdateRelativeToFramePos(0, 0, ptr);
             break;
         case 1:
-            Crack_UpdateCracksRelativeToCrackPos(1, 1, ptr);
+            StressLevel_UpdateRelativeToFramePos(1, 1, ptr);
             break;
         case 2:
-            Crack_UpdateCracksRelativeToCrackPos(2, 2, ptr);
+            StressLevel_UpdateRelativeToFramePos(2, 2, ptr);
             break;
         case 3:
-            Crack_UpdateCracksRelativeToCrackPos(3, 3, ptr);
+            StressLevel_UpdateRelativeToFramePos(3, 3, ptr);
             break;
         case 4:
-            Crack_UpdateCracksRelativeToCrackPos(4, 4, ptr);
+            StressLevel_UpdateRelativeToFramePos(4, 4, ptr);
             break;
         case 5:
-            Crack_UpdateCracksRelativeToCrackPos(5, 5, ptr);
+            StressLevel_UpdateRelativeToFramePos(5, 5, ptr);
             break;
         case 6:
-            Crack_UpdateCracksRelativeToCrackPos(6, 6, ptr);
+            StressLevel_UpdateRelativeToFramePos(6, 6, ptr);
             break;
         case 7:
-            Crack_UpdateCracksRelativeToCrackPos(7, 7, ptr);
+            StressLevel_UpdateRelativeToFramePos(7, 7, ptr);
             break;
     }
 }
@@ -2537,52 +2532,52 @@ static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag, u32 itemSta
 
     switch(itemId) 
     {
-        case ID_STONE_1x4:
+        case MININGID_STONE_1x4:
             LoadSpritePalette(sSpritePal_Stone1x4);
             LoadCompressedSpriteSheet(sSpriteSheet_Stone1x4);
             spriteId = CreateSprite(&gSpriteStone1x4, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_4x1:
+        case MININGID_STONE_4x1:
             LoadSpritePalette(sSpritePal_Stone4x1);
             LoadCompressedSpriteSheet(sSpriteSheet_Stone4x1);
             spriteId = CreateSprite(&gSpriteStone4x1, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_2x4:
+        case MININGID_STONE_2x4:
             LoadSpritePalette(sSpritePal_Stone2x4);
             LoadCompressedSpriteSheet(sSpriteSheet_Stone2x4);
             spriteId = CreateSprite(&gSpriteStone2x4, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_4x2:
+        case MININGID_STONE_4x2:
             LoadSpritePalette(sSpritePal_Stone4x2);
             LoadCompressedSpriteSheet(sSpriteSheet_Stone4x2);
             spriteId = CreateSprite(&gSpriteStone4x2, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_2x2:
+        case MININGID_STONE_2x2:
             LoadSpritePalette(sSpritePal_Stone2x2);
             LoadCompressedSpriteSheet(sSpriteSheet_Stone2x2);
             spriteId = CreateSprite(&gSpriteStone2x2, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_3x3:
+        case MININGID_STONE_3x3:
             LoadSpritePalette(sSpritePal_Stone3x3);
             LoadCompressedSpriteSheet(sSpriteSheet_Stone3x3);
             spriteId = CreateSprite(&gSpriteStone3x3, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_SNAKE1:
+        case MININGID_STONE_SNAKE1:
             LoadSpritePalette(sSpritePal_StoneSnake1);
             LoadCompressedSpriteSheet(sSpriteSheet_StoneSnake1);
             spriteId = CreateSprite(&gSpriteStoneSnake1, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_SNAKE2:
+        case MININGID_STONE_SNAKE2:
             LoadSpritePalette(sSpritePal_StoneSnake2);
             LoadCompressedSpriteSheet(sSpriteSheet_StoneSnake2);
             spriteId = CreateSprite(&gSpriteStoneSnake2, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_MUSHROOM1:
+        case MININGID_STONE_MUSHROOM1:
             LoadSpritePalette(sSpritePal_StoneMushroom1);
             LoadCompressedSpriteSheet(sSpriteSheet_StoneMushroom1);
             spriteId = CreateSprite(&gSpriteStoneMushroom1, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
             break;
-        case ID_STONE_MUSHROOM2:
+        case MININGID_STONE_MUSHROOM2:
             LoadSpritePalette(sSpritePal_StoneMushroom2);
             LoadCompressedSpriteSheet(sSpriteSheet_StoneMushroom2);
             spriteId = CreateSprite(&gSpriteStoneMushroom2, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
@@ -2668,31 +2663,31 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
     {
         default:
         case 1:
-            xMin = ITEM_ZONE_1_X_LEFT_BOUNDARY;
-            xMax = ITEM_ZONE_1_X_RIGHT_BOUNDARY;
-            yMin = ITEM_ZONE_1_Y_UP_BOUNDARY;
-            yMax = ITEM_ZONE_1_Y_DOWN_BOUNDARY;
+            xMin = MINING_ZONE_1_X_LEFT_BOUNDARY;
+            xMax = MINING_ZONE_1_X_RIGHT_BOUNDARY;
+            yMin = MINING_ZONE_1_Y_UP_BOUNDARY;
+            yMax = MINING_ZONE_1_Y_DOWN_BOUNDARY;
             paletteTag = TAG_PAL_ITEM1;
             break;
         case 2:
-            xMin = ITEM_ZONE_2_X_LEFT_BOUNDARY;
-            xMax = ITEM_ZONE_2_X_RIGHT_BOUNDARY;
-            yMin = ITEM_ZONE_2_Y_UP_BOUNDARY;
-            yMax = ITEM_ZONE_2_Y_DOWN_BOUNDARY;
+            xMin = MINING_ZONE_2_X_LEFT_BOUNDARY;
+            xMax = MINING_ZONE_2_X_RIGHT_BOUNDARY;
+            yMin = MINING_ZONE_2_Y_UP_BOUNDARY;
+            yMax = MINING_ZONE_2_Y_DOWN_BOUNDARY;
             paletteTag = TAG_PAL_ITEM2;
             break;
         case 3:
-            xMin = ITEM_ZONE_3_X_LEFT_BOUNDARY;
-            xMax = ITEM_ZONE_3_X_RIGHT_BOUNDARY;
-            yMin = ITEM_ZONE_3_Y_UP_BOUNDARY;
-            yMax = ITEM_ZONE_3_Y_DOWN_BOUNDARY;
+            xMin = MINING_ZONE_3_X_LEFT_BOUNDARY;
+            xMax = MINING_ZONE_3_X_RIGHT_BOUNDARY;
+            yMin = MINING_ZONE_3_Y_UP_BOUNDARY;
+            yMax = MINING_ZONE_3_Y_DOWN_BOUNDARY;
             paletteTag = TAG_PAL_ITEM3;
             break;
         case 4:
-            xMin = ITEM_ZONE_4_X_LEFT_BOUNDARY;
-            xMax = ITEM_ZONE_4_X_RIGHT_BOUNDARY;
-            yMin = ITEM_ZONE_4_Y_UP_BOUNDARY;
-            yMax = ITEM_ZONE_4_Y_DOWN_BOUNDARY;
+            xMin = MINING_ZONE_4_X_LEFT_BOUNDARY;
+            xMax = MINING_ZONE_4_X_RIGHT_BOUNDARY;
+            yMin = MINING_ZONE_4_Y_UP_BOUNDARY;
+            yMax = MINING_ZONE_4_Y_DOWN_BOUNDARY;
             paletteTag = TAG_PAL_ITEM4;
             break;
     }
@@ -2743,17 +2738,17 @@ static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId) // PSF magic
     u32 height = MiningStoneList[itemId].height;
     u32 width = MiningStoneList[itemId].width;
 
-    if ((x + width) > GRID_WIDTH)
+    if ((x + width) > MINING_ZONE_WIDTH)
         return FALSE;
 
-    if ((y + height) > GRID_HEIGHT)
+    if ((y + height) > MINING_ZONE_HEIGHT)
         return FALSE;
 
     for (dx = 0; dx < width; dx++) 
     {
         for (dy = 0; dy < height; dy++) 
         {
-            if (sMiningUiState->itemMap[x + dx + (y + dy) * GRID_WIDTH] != 0) 
+            if (sMiningUiState->itemMap[x + dx + (y + dy) * MINING_ZONE_WIDTH] != 0) 
             {
                 return FALSE;
             }
@@ -2766,12 +2761,12 @@ static bool32 DoesStoneFitInItemMap(u8 itemId)
 {
     u32 coordX, coordY;
 
-    if (itemId == ITEMID_NONE)
+    if (itemId == MININGID_NONE)
         return FALSE;
 
-    for (coordX = 0; coordX < GRID_WIDTH; coordX++)
+    for (coordX = 0; coordX < MINING_ZONE_WIDTH; coordX++)
     {
-        for (coordY = 0; coordY < GRID_HEIGHT; coordY++)
+        for (coordY = 0; coordY < MINING_ZONE_HEIGHT; coordY++)
         {
             if (CanStoneBePlacedAtXY(coordX,coordY,itemId))
                 return TRUE;
@@ -2780,20 +2775,19 @@ static bool32 DoesStoneFitInItemMap(u8 itemId)
     return FALSE;
 }
 
-// TODO: Fill this function with the rest of the stones 
 static void DoDrawRandomStone(u8 itemId)
 {
-    u32 x = Random() % GRID_WIDTH;
-    u32 y = Random() % GRID_HEIGHT;
+    u32 x = Random() % MINING_ZONE_WIDTH;
+    u32 y = Random() % MINING_ZONE_HEIGHT;
 
     while(!CanStoneBePlacedAtXY(x,y,itemId))
     {
-        x = Random() % GRID_WIDTH;
-        y = Random() % GRID_HEIGHT;
+        x = Random() % MINING_ZONE_WIDTH;
+        y = Random() % MINING_ZONE_HEIGHT;
     }
 
     DrawItemSprite(x, y, itemId, TAG_DUMMY, 0);
-    // Dont want to use ITEM_TILE_DUG_UP, not sure if something unexpected will happen
+    // Dont want to use MINING_ITEM_TILE_DUG_UP, not sure if something unexpected will happen
     OverwriteItemMapData(x, y, 6, itemId);
 }
 
@@ -2813,7 +2807,7 @@ static void Mining_CheckItemFound(void)
         {
             if(sMiningUiState->itemMap[i] == 1 && sMiningUiState->layerMap[i] == 6) 
             {
-                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
                 sMiningUiState->buriedItems[0].buriedState++;
             }
         }
@@ -2836,7 +2830,7 @@ static void Mining_CheckItemFound(void)
         {
             if(sMiningUiState->itemMap[i] == 2 && sMiningUiState->layerMap[i] == 6) 
             {
-                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
                 sMiningUiState->buriedItems[1].buriedState++;
             }
         }
@@ -2859,7 +2853,7 @@ static void Mining_CheckItemFound(void)
         {
             if(sMiningUiState->itemMap[i] == 3 && sMiningUiState->layerMap[i] == 6) 
             {
-                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
                 sMiningUiState->buriedItems[2].buriedState++;
             }
         }
@@ -2882,7 +2876,7 @@ static void Mining_CheckItemFound(void)
         {
             if(sMiningUiState->itemMap[i] == 4 && sMiningUiState->layerMap[i] == 6) 
             {
-                sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
                 sMiningUiState->buriedItems[3].buriedState++;
             }
         }
@@ -2900,7 +2894,7 @@ static void Mining_CheckItemFound(void)
     {
         if(sMiningUiState->itemMap[i] == 6 && sMiningUiState->layerMap[i] == 6) 
         {
-            sMiningUiState->itemMap[i] = ITEM_TILE_DUG_UP;
+            sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
         }
     }
 
@@ -3077,7 +3071,7 @@ static u8 Terrain_Pickaxe_OverwriteTiles(u16* ptr)
 {
     u8 pos = sMiningUiState->cursorX + (sMiningUiState->cursorY-2)*12;
 
-    if (sMiningUiState->itemMap[pos] != ITEM_TILE_DUG_UP) 
+    if (sMiningUiState->itemMap[pos] != MINING_ITEM_TILE_DUG_UP) 
     {
         if (sMiningUiState->cursorX != 0) 
         {
@@ -3232,7 +3226,7 @@ static u32 GetCrackPosition(void)
 
 static bool32 IsCrackMax(void) 
 {
-    return GetCrackPosition() == CRACK_POS_MAX;
+    return GetCrackPosition() == STRESS_LEVEL_POS_MAX;
 }
 
 static void EndMining(u8 taskId) 
@@ -3473,7 +3467,7 @@ static u32 GetTotalNumberOfBuriedItems(void)
     u32 itemIndex = 0;
     u32 count = 0;
 
-    for (itemIndex = 0; itemIndex < MAX_NUM_BURIED_ITEMS; itemIndex++)
+    for (itemIndex = 0; itemIndex < MINING_MAX_NUM_BURIED_ITEMS; itemIndex++)
         if (GetBuriedBagItemId(itemIndex))
             count++;
 
@@ -3485,7 +3479,7 @@ static u32 GetNumberOfFoundItems(void)
     u32 itemIndex = 0;
     u32 count = 0;
 
-    for (itemIndex = 0; itemIndex < MAX_NUM_BURIED_ITEMS; itemIndex++)
+    for (itemIndex = 0; itemIndex < MINING_MAX_NUM_BURIED_ITEMS; itemIndex++)
         if (GetBuriedItemStatus(itemIndex))
             count++;
 
@@ -3500,9 +3494,9 @@ static bool32 AreAllItemsFound(void)
 static void InitBuriedItems(void) 
 {
     u32 index = 0;
-    for (index = 0; index < MAX_NUM_BURIED_ITEMS; index++)
+    for (index = 0; index < MINING_MAX_NUM_BURIED_ITEMS; index++)
     {
-        SetBuriedItemsId(index,ITEMID_NONE);
+        SetBuriedItemsId(index,MININGID_NONE);
         SetBuriedItemStatus(index,FALSE);
     }
 }
@@ -3555,10 +3549,10 @@ static u32 Debug_CreateRandomItem(u32 random, u32 itemId)
     u32 debug = 4;
     switch (debugVariable++)
     {
-        case 0: return ITEMID_THUNDER_STONE;
-        case 1: return ITEMID_THUNDER_STONE;
-        case 2: return ITEMID_THUNDER_STONE;
-        case 3: return ITEMID_THUNDER_STONE;
+        case 0: return MININGID_THUNDER_STONE;
+        case 1: return MININGID_THUNDER_STONE;
+        case 2: return MININGID_THUNDER_STONE;
+        case 3: return MININGID_THUNDER_STONE;
         default: return itemId;
     }
 }
@@ -3567,9 +3561,9 @@ static u32 Debug_CreateRandomItem(u32 random, u32 itemId)
 static u32 Debug_DetermineStoneSize(u32 stone, u32 stoneIndex)
 {
 #if DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
-    u32 desiredStones[2] = {ID_STONE_MUSHROOM2, ID_STONE_MUSHROOM1};
+    u32 desiredStones[2] = {MININGID_STONE_MUSHROOM2, ID_STONE_MUSHROOM1};
     stoneIndex = (stoneIndex > 1) ? 1 : stoneIndex;
-    return (desiredStones[stoneIndex] == ITEMID_NONE) ? stone : desiredStones[stoneIndex];
+    return (desiredStones[stoneIndex] == MININGID_NONE) ? stone : desiredStones[stoneIndex];
 #else
     return stone;
 #endif
