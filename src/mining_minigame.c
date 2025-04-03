@@ -1,5 +1,3 @@
-// TODO:        Make a 3 frame cursor sprite and add it to the mining_minigame graphics folder instead of using 
-//              the one from the pokenav
 // TODO++:      Completely rewrite the item generation algorithm. Splitting items into four zones is a bad idea.
 //              Use the current stone generation algorithm that checks WHICH stone can be placed WHERE, by iterating
 //              through the `itemMap[]`.
@@ -292,7 +290,7 @@ static const u8 gMiningMessageBoxGfx[] = INCBIN_U8("graphics/mining_minigame/mes
 static const u16 gMiningMessageBoxPal[] = INCBIN_U16("graphics/mining_minigame/message_box.gbapal");
 
 // Sprite data
-const u32 gCursorGfx[] = INCBIN_U32("graphics/pokenav/region_map/cursor_small.4bpp.lz");
+const u32 gCursorGfx[] = INCBIN_U32("graphics/mining_minigame/cursor.4bpp.lz");
 const u16 gCursorPal[] = INCBIN_U16("graphics/pokenav/region_map/cursor.gbapal");
 
 const u32 gButtonGfx[] = INCBIN_U32("graphics/mining_minigame/buttons.4bpp.lz");
@@ -306,7 +304,7 @@ const u16 gHitEffectPal[] = INCBIN_U16("graphics/mining_minigame/hit_effects.gba
 
 static const struct CompressedSpriteSheet sSpriteSheet_Cursor[] =
 {
-    {gCursorGfx, 256, TAG_CURSOR},
+    {gCursorGfx, 384, TAG_CURSOR},
     {NULL},
 };
 
@@ -435,8 +433,10 @@ static const struct OamData gOamItem64x64 =
 
 static const union AnimCmd gAnimCmdCursor[] =
 {
-    ANIMCMD_FRAME(0, 20),
-    ANIMCMD_FRAME(4, 20),
+    ANIMCMD_FRAME(0, 8),
+    ANIMCMD_FRAME(4, 8),
+    ANIMCMD_FRAME(8, 8),
+    ANIMCMD_FRAME(4, 8),
     ANIMCMD_JUMP(0),
 };
 
