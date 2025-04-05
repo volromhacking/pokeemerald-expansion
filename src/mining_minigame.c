@@ -1,3 +1,4 @@
+// BUG TODO:    When digging up an item with the last hit before the stress level is maxed out, the game gives you another hit 
 // TODO++:      Completely rewrite the item generation algorithm. Splitting items into four zones is a bad idea.
 //              Use the current stone generation algorithm that checks WHICH stone can be placed WHERE, by iterating
 //              through the `itemMap[]`.
@@ -1718,7 +1719,6 @@ static bool8 Mining_InitBgs(void)
 static void Task_Mining_WaitFadeAndBail(u8 taskId) 
 {
     if (!gPaletteFade.active)
-
     {
         SetMainCallback2(sMiningUiState->leavingCallback);
         Mining_FreeResources();
@@ -1755,9 +1755,8 @@ static void MiningUi_Shake(u8 taskId)
     {
         case 0: // Left 1 - Down 1
             MakeCursorInvisible();
-            if (!IsCrackMax() && Random() % 100 < 20) { // 20 % chance of not shaking the screen
+            if (!IsCrackMax() && Random() % 100 < 20) // 20 % chance of not shaking the screen
                 sMiningUiState->toggleShakeDuringAnimation = TRUE;  
-            }
             MoveItemSprites(-1, 1);
             sMiningUiState->shakeState++;
             break;
@@ -1824,9 +1823,7 @@ static void MiningUi_Shake(u8 taskId)
         case 12: // Right 1 - Down 1
             MoveItemSprites(3, 3);
             if (!IsCrackMax()) 
-            {
                 gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
-            }
             gSprites[sMiningUiState->ShakeHitTool].x += 7;
             StartSpriteAnim(&gSprites[sMiningUiState->ShakeHitTool], 1);
             sMiningUiState->shakeState++;
@@ -1862,9 +1859,7 @@ static void MiningUi_Shake(u8 taskId)
                 break;
             }
             if (IsCrackMax()) 
-            {
                 WallCollapseAnimation();
-            } 
             gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
             sMiningUiState->shakeState = 0;
             sMiningUiState->shouldShake = FALSE;
@@ -1922,11 +1917,8 @@ static bool8 Mining_LoadBgGraphics(void)
                 for (i = 0; i<32; i++) 
                 {
                     for (j = 0; j<32; j++) 
-                    {
                         OverwriteTileDataInTilemapBuffer(0, i, j, tilemapBuf, 2);
-                    }
                 }
-
                 LZDecompressWram(gCracksAndTerrainTilemap, sMiningUiState->sBg2TilemapBuffer);
                 LZDecompressWram(sUiTilemap, sMiningUiState->sBg3TilemapBuffer);
                 sMiningUiState->loadGameState++;
@@ -2188,19 +2180,6 @@ static void Task_MiningMainInput(u8 taskId)
         EndMining(taskId);
 }
 
-// DO NOT TOUCH ANY OF THE CRACK UPDATE FUNCTIONS!!!!! GENERATION IS TOO COMPLICATED TO GET FIXED! (most likely will forget everything lmao (thats why)! )!
-//
-// Each function represent one frame of a crack, but why are there two offset vars?????
-// Well there's `ofs` for telling how much to the left the next crack goes, (cracks are split up by seven of these 32x32 `sprites`) (Cracks start at the end, so 23 is the first tile.);
-//
-// `ofs2` tells how far the tile should move to the right side. Thats because the cracks dont really line up each other.
-// So you cant put one 32x32 `sprite` (calling them sprites) right next to another 32x32 `sprite`. To align the next `sprite` so it looks right, we have to offset the next `sprite` by 8 pixels or 1 tile.
-//
-// You are still confused? Im sorry I cant help you, after one week, I will also have problems understanding that again.
-//
-// NOTE TO MY FUTURE SELF: The crack updating
-//
-// Maybe TODO: Maybe rewrite this shit into a table or something that is used by one function
 static void StressLevel_Draw_0(u8 ofs, u8 ofs2, u16* ptr) 
 {
     OverwriteTileDataInTilemapBuffer(0x07, 21 - ofs * 4 + ofs2, 1, ptr, 0x01);
@@ -2555,9 +2534,6 @@ static void DrawItemSprite(u8 x, u8 y, u8 itemId, u32 itemNumPalTag, u32 itemSta
             gSpriteTemplate = CreatePaletteAndReturnTemplate(MiningItemList[itemId].tag, itemNumPalTag, itemId);
             LoadCompressedSpriteSheet(MiningItemList[itemId].sheet);
             sMiningUiState->buriedItems[itemStateId].spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);   
-            DebugPrintf("Sprite ID: %d", sMiningUiState->buriedItems[itemStateId].spriteId);
-            DebugPrintf("PalNum:    %d", gSprites[sMiningUiState->buriedItems[itemStateId].spriteId].oam.paletteNum);
-
             Debug_RaiseSpritePriority(sMiningUiState->buriedItems[itemId].spriteId);
             return;
             break;
@@ -2666,26 +2642,18 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
         for(x=xMin; x<=xMax; x++) 
         {
             if (isItemPlaced) 
-            {
                 continue;
-            }
 
             if (Random() <= 49151) 
-            {
                 continue;
-            }
 
             Debug_DetermineLocation(&x,&y,itemStateId); // Debug
 
             if (MiningItemList[(itemId)].top == 3) 
-            {
                 y=yMin;
-            }
 
             if (!CheckIfItemCanBePlaced(itemId, x, y, xMax, yMax)) 
-            {
                 continue;
-            }
 
             DrawItemSprite(x,y,itemId, paletteTag, itemStateId - 1);
             OverwriteItemMapData(x, y, itemStateId, itemId); // For the collection logic, overwrite the itemmap data
@@ -2694,10 +2662,7 @@ static void DoDrawRandomItem(u8 itemStateId, u8 itemId)
         }
         // If it hasn't placed an Item (that's very unlikely but while debuggin, this happened), just retry
         if (y == yMax && !isItemPlaced) 
-        {
-            //DebugPrintf("We have failed trying to place an item in the following coordinates xMin %d xMax %d yMin %d yMax %d",xMin,xMax,yMin,yMax);
             y = yMin;
-        }
     }
 }
 
@@ -2756,117 +2721,44 @@ static void DoDrawRandomStone(u8 itemId)
     }
 
     DrawItemSprite(x, y, itemId, TAG_DUMMY, 0);
-    // Dont want to use MINING_ITEM_TILE_DUG_UP, not sure if something unexpected will happen
     OverwriteItemMapData(x, y, 6, itemId);
 }
 
-// TODO: This looks ugly and is badly written. Rewrite PLEASE >:(
+static void HandleItemState(u32 itemId) {
+    u32 i;
+    u32 full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(itemId));
+    u32 stop = full+1;
+
+    if (sMiningUiState->buriedItems[itemId].buriedState < full && sMiningUiState->buriedItems[itemId].isSelected) 
+    {
+        for(i=0;i<96;i++) 
+        {
+            if(sMiningUiState->itemMap[i] == itemId+1 && sMiningUiState->layerMap[i] == 6) 
+            {
+                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
+                sMiningUiState->buriedItems[itemId].buriedState++;
+            }
+        }
+    } else if (sMiningUiState->buriedItems[itemId].buriedState == full) 
+    {
+        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[itemId].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
+        sMiningUiState->buriedItems[itemId].buriedState = stop;
+        SetBuriedItemStatus(itemId,TRUE);
+    }
+}
+
 static void Mining_CheckItemFound(void) 
 {
-    u8 full;
-    u8 stop;
-    u8 i;
+    HandleItemState(0);
+    HandleItemState(1);
+    HandleItemState(2);
+    HandleItemState(3);
 
-    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(0));
-    stop = full+1;
-
-    if (sMiningUiState->buriedItems[0].buriedState < full && sMiningUiState->buriedItems[0].isSelected) 
-    {
-        for(i=0;i<96;i++) 
-        {
-            if(sMiningUiState->itemMap[i] == 1 && sMiningUiState->layerMap[i] == 6) 
-            {
-                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
-                sMiningUiState->buriedItems[0].buriedState++;
-            }
-        }
-    } else if (sMiningUiState->buriedItems[0].buriedState == full) 
-    {
-        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[0].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
-        DebugPrintf("Item 0: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[0].spriteId].oam.paletteNum));
-        DebugPrintf("Item 0 palnum: %d", gSprites[sMiningUiState->buriedItems[0].spriteId].oam.paletteNum);
-        DebugPrintf("Item 0 spriteId: %d", sMiningUiState->buriedItems[0].spriteId);
-        sMiningUiState->buriedItems[0].buriedState = stop;
-        SetBuriedItemStatus(0,TRUE);
-    }
-
-    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(1));
-    stop = full+1;
-
-    if (sMiningUiState->buriedItems[1].buriedState < full && sMiningUiState->buriedItems[1].isSelected) 
-    {
-        for(i=0;i<96;i++) 
-        {
-            if(sMiningUiState->itemMap[i] == 2 && sMiningUiState->layerMap[i] == 6) 
-            {
-                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
-                sMiningUiState->buriedItems[1].buriedState++;
-            }
-        }
-    } else if (sMiningUiState->buriedItems[1].buriedState == full) 
-    {
-        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[1].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
-        DebugPrintf("Item 1: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[1].spriteId].oam.paletteNum));
-        DebugPrintf("Item 1 palnum: %d", gSprites[sMiningUiState->buriedItems[1].spriteId].oam.paletteNum);
-        DebugPrintf("Item 1 spriteId: %d", sMiningUiState->buriedItems[1].spriteId);
-        sMiningUiState->buriedItems[1].buriedState = stop;
-        SetBuriedItemStatus(1,TRUE);
-    }
-
-    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(2));
-    stop = full+1;
-
-    if (sMiningUiState->buriedItems[2].buriedState < full && sMiningUiState->buriedItems[2].isSelected) 
-    {
-        for(i=0;i<96;i++) 
-        {
-            if(sMiningUiState->itemMap[i] == 3 && sMiningUiState->layerMap[i] == 6) 
-            {
-                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
-                sMiningUiState->buriedItems[2].buriedState++;
-            }
-        }
-    } else if (sMiningUiState->buriedItems[2].buriedState == full) 
-    {
-        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[2].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
-        DebugPrintf("Item 2: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[2].spriteId].oam.paletteNum));
-        DebugPrintf("Item 2 palnum: %d", gSprites[sMiningUiState->buriedItems[2].spriteId].oam.paletteNum);
-        DebugPrintf("Item 2 spriteId: %d", sMiningUiState->buriedItems[2].spriteId);
-        sMiningUiState->buriedItems[2].buriedState = stop;
-        SetBuriedItemStatus(2,TRUE);
-    }
-
-    full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(3));
-    stop = full+1;
-
-    if (sMiningUiState->buriedItems[3].buriedState < full && sMiningUiState->buriedItems[3].isSelected) 
-    {
-        for(i=0;i<96;i++) 
-        {
-            if(sMiningUiState->itemMap[i] == 4 && sMiningUiState->layerMap[i] == 6) 
-            {
-                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
-                sMiningUiState->buriedItems[3].buriedState++;
-            }
-        }
-    } else if (sMiningUiState->buriedItems[3].buriedState == full) 
-    {
-        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[3].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
-        DebugPrintf("Item 3: %d", 1 << (16 + gSprites[sMiningUiState->buriedItems[3].spriteId].oam.paletteNum));
-        DebugPrintf("Item 3 palnum: %d", gSprites[sMiningUiState->buriedItems[3].spriteId].oam.paletteNum);
-        DebugPrintf("Item 3 spriteId: %d", sMiningUiState->buriedItems[3].spriteId);
-        sMiningUiState->buriedItems[3].buriedState = stop;
-        SetBuriedItemStatus(3,TRUE);
-    }
-
-    for(i=0;i<96;i++) 
+    for (u32 i=0;i<96;i++) 
     {
         if(sMiningUiState->itemMap[i] == 6 && sMiningUiState->layerMap[i] == 6) 
-        {
             sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
-        }
     }
-
 }
 
 static s16 RandRangeSigned(s16 min, s16 max)
@@ -2899,9 +2791,7 @@ static void Mining_DrawRandomTerrain(void)
 
     //Start by placing blank layer 3 rocks
     for (i = 0; i < 96; ++i) 
-    {    
         sMiningUiState->layerMap[i] = 2;
-    }
 
     //Create patches of lighter dirt areas
     totalTimes = 3 + random(5);
@@ -2921,8 +2811,7 @@ static void Mining_DrawRandomTerrain(void)
 
         for (; row1 < row2; ++row1)
         {
-            for (j = col1; j < col2; ++j) //col1 is needed in subsequent loops
-                                          //sUndergroundMiningPtr->grid[row1][j] = L2_SMALL_ROCK;
+            for (j = col1; j < col2; ++j)
                 sMiningUiState->layerMap[j + row1*12] = 4;
         }
     }
@@ -3043,35 +2932,25 @@ static u8 Terrain_Pickaxe_OverwriteTiles(u16* ptr)
     if (sMiningUiState->itemMap[pos] != MINING_ITEM_TILE_DUG_UP) 
     {
         if (sMiningUiState->cursorX != 0) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, -1, 0);
-        }
+
         if (sMiningUiState->cursorX != 11) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, 1, 0);
-        }
 
         // We have to add '2' to 7 and 0 because, remember: The cursor spawns at Y_position 2!!!
         if (sMiningUiState->cursorY != 9) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, 0, 1);
-        }
+
         if (sMiningUiState->cursorY != 2) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, 0, -1);
-        }
 
         // Center hit
         Terrain_UpdateLayerTileOnScreen(ptr,0,0);
         if (sMiningUiState->tool == BLUE_BUTTON) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr,0,0);
-        }
         return 0;
     } else 
-    {
         return 1;
-    }
 }
 
 static void Terrain_Hammer_OverwriteTiles(u16* ptr) 
@@ -3085,29 +2964,19 @@ static void Terrain_Hammer_OverwriteTiles(u16* ptr)
         // Corners
         // We have to add '2' to 7 and 0 because, remember: The cursor spawns at Y_position 2!!!
         if (sMiningUiState->cursorX != 11 && sMiningUiState->cursorY != 9) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, 1, 1);
-        }
 
         if (sMiningUiState->cursorX != 0 && sMiningUiState->cursorY != 9) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, -1, 1);
-        }
 
         if (sMiningUiState->cursorX != 11 && sMiningUiState->cursorY != 2) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, 1, -1);
-        }
 
         if (sMiningUiState->cursorX != 0 && sMiningUiState->cursorY != 2) 
-        {
             Terrain_UpdateLayerTileOnScreen(ptr, -1, -1);
-        }
 
         if (sMiningUiState->layerMap[pos] != 6) 
-        {
             Terrain_Pickaxe_OverwriteTiles(ptr);
-        }
     }
 }
 
@@ -3257,14 +3126,13 @@ static void Task_WaitButtonPressOpening(u8 taskId)
                 gTasks[taskId].func = Task_MiningMainInput;
                 break;
         }
-    } else if (JOY_NEW(A_BUTTON))
+    } 
+    else if (JOY_NEW(A_BUTTON))
     {
         while(1) 
         {
             if (!RunTextPrintersAndIsPrinter0Active()) 
-            {
                 break;        
-            }
         }
     }
 }
