@@ -669,8 +669,24 @@ static const u16 gItemSunStonePal[] = INCGFX_U16("graphics/mining_minigame/items
 static const u32 gItemOddKeyStoneGfx[] = INCGFX_U32("graphics/mining_minigame/items/odd_key_stone.png", ".4bpp.smol");
 static const u16 gItemOddKeyStonePal[] = INCGFX_U16("graphics/mining_minigame/items/odd_key_stone.png", ".gbapal");
 
+static const u32 gItemRareBoneGfx[] = INCGFX_U32("graphics/mining_minigame/items/rare_bone.png", ".4bpp.smol");
+static const u16 gItemRareBonePal[] = INCGFX_U16("graphics/mining_minigame/items/rare_bone.png", ".gbapal");
+
 static const u32 gItemSkullFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/skull_fossil.png", ".4bpp.smol");
 static const u32 gItemArmorFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/armor_fossil.png", ".4bpp.smol");
+static const u32 gItemHelixFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/helix_fossil.png", ".4bpp.smol");
+static const u32 gItemDomeFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/dome_fossil.png", ".4bpp.smol");
+static const u32 gItemOldAmberGfx[] = INCGFX_U32("graphics/mining_minigame/items/old_amber.png", ".4bpp.smol");
+static const u32 gItemClawFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/claw_fossil.png", ".4bpp.smol");
+static const u32 gItemRootFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/root_fossil.png", ".4bpp.smol");
+static const u32 gItemCoverFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/cover_fossil.png", ".4bpp.smol");
+static const u32 gItemPlumeFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/plume_fossil.png", ".4bpp.smol");
+static const u32 gItemJawFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/jaw_fossil.png", ".4bpp.smol");
+static const u32 gItemSailFossilGfx[] = INCGFX_U32("graphics/mining_minigame/items/sail_fossil.png", ".4bpp.smol");
+static const u32 gItemFossilizedBirdGfx[] = INCGFX_U32("graphics/mining_minigame/items/fossilized_bird.png", ".4bpp.smol");
+static const u32 gItemFossilizedDinoGfx[] = INCGFX_U32("graphics/mining_minigame/items/fossilized_dino.png", ".4bpp.smol");
+static const u32 gItemFossilizedDrakeGfx[] = INCGFX_U32("graphics/mining_minigame/items/fossilized_drake.png", ".4bpp.smol");
+static const u32 gItemFossilizedFishGfx[] = INCGFX_U32("graphics/mining_minigame/items/fossilized_fish.png", ".4bpp.smol");
 static const u16 gItemFossilPal[] = INCGFX_U16("graphics/mining_minigame/items/fossil.pal", ".gbapal");
 
 // Stone SpriteSheets and SpritePalettes
@@ -962,6 +978,13 @@ static const struct CompressedSpriteSheet sSpriteSheet_ItemOddKeyStone =
     MINING_TAG_ITEM_ODD_KEY_STONE,
 };
 
+static const struct CompressedSpriteSheet sSpriteSheet_ItemRareBone =
+{
+    gItemRareBoneGfx,
+    2048,
+    MINING_TAG_ITEM_RARE_BONE,
+};
+
 static const struct CompressedSpriteSheet sSpriteSheet_ItemSkullFossil =
 {
     gItemSkullFossilGfx,
@@ -974,6 +997,97 @@ static const struct CompressedSpriteSheet sSpriteSheet_ItemArmorFossil =
     gItemArmorFossilGfx,
     2048,
     MINING_TAG_ITEM_ARMOR_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemHelixFossil =
+{
+    gItemHelixFossilGfx,
+    2048,
+    MINING_TAG_ITEM_HELIX_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemDomeFossil =
+{
+    gItemDomeFossilGfx,
+    2048,
+    MINING_TAG_ITEM_DOME_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemOldAmber =
+{
+    gItemOldAmberGfx,
+    2048,
+    MINING_TAG_ITEM_OLD_AMBER,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemClawFossil =
+{
+    gItemClawFossilGfx,
+    2048,
+    MINING_TAG_ITEM_CLAW_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemRootFossil =
+{
+    gItemRootFossilGfx,
+    2048,
+    MINING_TAG_ITEM_ROOT_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemCoverFossil =
+{
+    gItemCoverFossilGfx,
+    2048,
+    MINING_TAG_ITEM_COVER_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemPlumeFossil =
+{
+    gItemPlumeFossilGfx,
+    2048,
+    MINING_TAG_ITEM_PLUME_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemJawFossil =
+{
+    gItemJawFossilGfx,
+    2048,
+    MINING_TAG_ITEM_JAW_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemSailFossil =
+{
+    gItemSailFossilGfx,
+    2048,
+    MINING_TAG_ITEM_SAIL_FOSSIL,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemFossilizedBird =
+{
+    gItemFossilizedBirdGfx,
+    2048,
+    MINING_TAG_ITEM_FOSSILIZED_BIRD,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemFossilizedDino =
+{
+    gItemFossilizedDinoGfx,
+    2048,
+    MINING_TAG_ITEM_FOSSILIZED_DINO,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemFossilizedDrake =
+{
+    gItemFossilizedDrakeGfx,
+    2048,
+    MINING_TAG_ITEM_FOSSILIZED_DRAKE,
+};
+
+static const struct CompressedSpriteSheet sSpriteSheet_ItemFossilizedFish =
+{
+    gItemFossilizedFishGfx,
+    2048,
+    MINING_TAG_ITEM_FOSSILIZED_FISH,
 };
 
 static const struct SpriteTemplate gSpriteStone1x4 =
@@ -1272,6 +1386,13 @@ static const struct MiningItem MiningItemList[] =
         .sheet = &sSpriteSheet_ItemOddKeyStone,
         .paldata = gItemOddKeyStonePal,
     },
+    [MININGID_RARE_BONE] =
+    {
+        .bagItemId = ITEM_RARE_BONE,
+        .tag = MINING_TAG_ITEM_RARE_BONE,
+        .sheet = &sSpriteSheet_ItemRareBone,
+        .paldata = gItemRareBonePal,
+    },
     [MININGID_SKULL_FOSSIL] =
     {
         .bagItemId = ITEM_SKULL_FOSSIL,
@@ -1284,6 +1405,97 @@ static const struct MiningItem MiningItemList[] =
         .bagItemId = ITEM_ARMOR_FOSSIL,
         .tag = MINING_TAG_ITEM_ARMOR_FOSSIL,
         .sheet = &sSpriteSheet_ItemArmorFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_HELIX_FOSSIL] =
+    {
+        .bagItemId = ITEM_HELIX_FOSSIL,
+        .tag = MINING_TAG_ITEM_HELIX_FOSSIL,
+        .sheet = &sSpriteSheet_ItemHelixFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_DOME_FOSSIL] =
+    {
+        .bagItemId = ITEM_DOME_FOSSIL,
+        .tag = MINING_TAG_ITEM_DOME_FOSSIL,
+        .sheet = &sSpriteSheet_ItemDomeFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_OLD_AMBER] =
+    {
+        .bagItemId = ITEM_OLD_AMBER,
+        .tag = MINING_TAG_ITEM_OLD_AMBER,
+        .sheet = &sSpriteSheet_ItemOldAmber,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_CLAW_FOSSIL] =
+    {
+        .bagItemId = ITEM_CLAW_FOSSIL,
+        .tag = MINING_TAG_ITEM_CLAW_FOSSIL,
+        .sheet = &sSpriteSheet_ItemClawFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_ROOT_FOSSIL] =
+    {
+        .bagItemId = ITEM_ROOT_FOSSIL,
+        .tag = MINING_TAG_ITEM_ROOT_FOSSIL,
+        .sheet = &sSpriteSheet_ItemRootFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_COVER_FOSSIL] =
+    {
+        .bagItemId = ITEM_COVER_FOSSIL,
+        .tag = MINING_TAG_ITEM_COVER_FOSSIL,
+        .sheet = &sSpriteSheet_ItemCoverFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_PLUME_FOSSIL] =
+    {
+        .bagItemId = ITEM_PLUME_FOSSIL,
+        .tag = MINING_TAG_ITEM_PLUME_FOSSIL,
+        .sheet = &sSpriteSheet_ItemPlumeFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_JAW_FOSSIL] =
+    {
+        .bagItemId = ITEM_JAW_FOSSIL,
+        .tag = MINING_TAG_ITEM_JAW_FOSSIL,
+        .sheet = &sSpriteSheet_ItemJawFossil,
+        .paldata = gItemFossilPal,
+    },	
+    [MININGID_SAIL_FOSSIL] =
+    {
+        .bagItemId = ITEM_SAIL_FOSSIL,
+        .tag = MINING_TAG_ITEM_SAIL_FOSSIL,
+        .sheet = &sSpriteSheet_ItemSailFossil,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_FOSSILIZED_BIRD] =
+    {
+        .bagItemId = ITEM_FOSSILIZED_BIRD,
+        .tag = MINING_TAG_ITEM_FOSSILIZED_BIRD,
+        .sheet = &sSpriteSheet_ItemFossilizedBird,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_FOSSILIZED_DINO] =
+    {
+        .bagItemId = ITEM_FOSSILIZED_DINO,
+        .tag = MINING_TAG_ITEM_FOSSILIZED_DINO,
+        .sheet = &sSpriteSheet_ItemFossilizedDino,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_FOSSILIZED_DRAKE] =
+    {
+        .bagItemId = ITEM_FOSSILIZED_DRAKE,
+        .tag = MINING_TAG_ITEM_FOSSILIZED_DRAKE,
+        .sheet = &sSpriteSheet_ItemFossilizedDrake,
+        .paldata = gItemFossilPal,
+    },
+    [MININGID_FOSSILIZED_FISH] =
+    {
+        .bagItemId = ITEM_FOSSILIZED_FISH,
+        .tag = MINING_TAG_ITEM_FOSSILIZED_FISH,
+        .sheet = &sSpriteSheet_ItemFossilizedFish,
         .paldata = gItemFossilPal,
     },
 };
@@ -1794,6 +2006,20 @@ static const u32 ItemRarityTable_Rare[] =
     MININGID_ODD_KEY_STONE,
     MININGID_SKULL_FOSSIL,
     MININGID_ARMOR_FOSSIL,
+    MININGID_HELIX_FOSSIL,
+    MININGID_DOME_FOSSIL,
+    MININGID_OLD_AMBER,
+    MININGID_CLAW_FOSSIL,
+    MININGID_ROOT_FOSSIL,
+    MININGID_COVER_FOSSIL,
+    MININGID_PLUME_FOSSIL,
+    MININGID_JAW_FOSSIL,
+    MININGID_SAIL_FOSSIL,
+    MININGID_FOSSILIZED_BIRD,
+    MININGID_FOSSILIZED_DINO,
+    MININGID_FOSSILIZED_DRAKE,
+    MININGID_FOSSILIZED_FISH,
+    MININGID_RARE_BONE,
 };
 
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == FALSE

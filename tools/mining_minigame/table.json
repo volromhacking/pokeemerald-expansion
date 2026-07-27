@@ -97,12 +97,68 @@
             "path": "./graphics/mining_minigame/items/odd_key_stone.4bpp"
         },
         {
+            "id": "MININGID_RARE_BONE",
+            "path": "./graphics/mining_minigame/items/rare_bone.4bpp"
+        },
+        {
             "id": "MININGID_SKULL_FOSSIL",
             "path": "./graphics/mining_minigame/items/skull_fossil.4bpp"
         },
         {
             "id": "MININGID_ARMOR_FOSSIL",
             "path": "./graphics/mining_minigame/items/armor_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_HELIX_FOSSIL",
+            "path": "./graphics/mining_minigame/items/helix_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_DOME_FOSSIL",
+            "path": "./graphics/mining_minigame/items/dome_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_OLD_AMBER",
+            "path": "./graphics/mining_minigame/items/old_amber.4bpp"
+        },
+        {
+            "id": "MININGID_CLAW_FOSSIL",
+            "path": "./graphics/mining_minigame/items/claw_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_ROOT_FOSSIL",
+            "path": "./graphics/mining_minigame/items/root_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_COVER_FOSSIL",
+            "path": "./graphics/mining_minigame/items/cover_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_PLUME_FOSSIL",
+            "path": "./graphics/mining_minigame/items/plume_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_JAW_FOSSIL",
+            "path": "./graphics/mining_minigame/items/jaw_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_SAIL_FOSSIL",
+            "path": "./graphics/mining_minigame/items/sail_fossil.4bpp"
+        },
+        {
+            "id": "MININGID_FOSSILIZED_BIRD",
+            "path": "./graphics/mining_minigame/items/fossilized_bird.4bpp"
+        },
+        {
+            "id": "MININGID_FOSSILIZED_DINO",
+            "path": "./graphics/mining_minigame/items/fossilized_dino.4bpp"
+        },
+        {
+            "id": "MININGID_FOSSILIZED_DRAKE",
+            "path": "./graphics/mining_minigame/items/fossilized_drake.4bpp"
+        },
+        {
+            "id": "MININGID_FOSSILIZED_FISH",
+            "path": "./graphics/mining_minigame/items/fossilized_fish.4bpp"
         }
     ],
     "stones": [
