@@ -106,8 +106,8 @@ struct MiningState
 {
 	MainCallback leavingCallback;	// Callback to leave the Ui
 	u32 loadGameState;
-	u32 layerMap[96];				// Array representing the screen. Determines virtual layers
-	u32 itemMap[96];				// Determines where items are on the screen
+	u32 layerMap[MINING_ZONE_SIZE];				// Array representing the screen. Determines virtual layers
+	u32 itemMap[MINING_ZONE_SIZE];				// Determines where items are on the screen
 	u32 cursorX;
 	u32 cursorY;
 
@@ -169,7 +169,7 @@ struct MiningState
 
 enum
 {
-	STATE_CLEAR_SCREEN = 0,
+	STATE_CLEAR_SCREEN,
 	STATE_RESET_DATA,
 	STATE_INIT_BGS,
 	STATE_LOAD_BGS,
@@ -213,18 +213,18 @@ enum
 
 enum
 {
-	ITEM_STATE_ID_NONE = 0, // Placeholder ID
-	ITEM_STATE_ID_1, // ID for item 1 in zone 1
-	ITEM_STATE_ID_2, // ID for item 2 in zone 2
-	ITEM_STATE_ID_3, // ID for item 3 in zone 3
-	ITEM_STATE_ID_4, // ID for item 4 in zone 4
-	ITEM_STATE_ID_5, // probably leftover from refactoring ?
-	ITEM_STATE_ID_6, // Stone
+	ITEM_STATE_ID_NONE,		// Placeholder ID
+	ITEM_STATE_ID_1,		// ID for item 1 in zone 1
+	ITEM_STATE_ID_2,		// ID for item 2 in zone 2
+	ITEM_STATE_ID_3,		// ID for item 3 in zone 3
+	ITEM_STATE_ID_4,		// ID for item 4 in zone 4
+	ITEM_STATE_ID_5,		// probably leftover from refactoring ?
+	ITEM_STATE_ID_6,		// Stone
 };
 
 enum
 {
-	BG_TEXT_BOX = 0,
+	BG_TEXT_BOX,
 	BG_COLLAPSE_SCREEN,
 	BG_STRESS_LEVEL,
 	BG_UI_GFX,
@@ -318,7 +318,7 @@ static const struct SpritePalette sSpritePal_Cursor[] =
 
 static const struct CompressedSpriteSheet sSpriteSheet_Buttons[] =
 {
-	{gButtonGfx, 4096 , TAG_BUTTONS},
+	{gButtonGfx, 4096, TAG_BUTTONS},
 	{NULL},
 };
 
@@ -330,25 +330,25 @@ static const struct SpritePalette sSpritePal_Buttons[] =
 
 static const struct CompressedSpriteSheet sSpriteSheet_HitEffectHammer[] =
 {
-	{gHitEffectHammerGfx, 2048 , TAG_HIT_EFFECT_HAMMER},
+	{gHitEffectHammerGfx, 2048, TAG_HIT_EFFECT_HAMMER},
 	{NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_HitEffectPickaxe[] =
 {
-	{gHitEffectPickaxeGfx, 2048 , TAG_HIT_EFFECT_PICKAXE},
+	{gHitEffectPickaxeGfx, 2048, TAG_HIT_EFFECT_PICKAXE},
 	{NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_HitHammer[] =
 {
-	{gHitHammerGfx, 1024 , TAG_HIT_HAMMER},
+	{gHitHammerGfx, 1024, TAG_HIT_HAMMER},
 	{NULL},
 };
 
 static const struct CompressedSpriteSheet sSpriteSheet_HitPickaxe[] =
 {
-	{gHitPickaxeGfx, 1024 , TAG_HIT_PICKAXE},
+	{gHitPickaxeGfx, 1024, TAG_HIT_PICKAXE},
 	{NULL},
 };
 
@@ -358,7 +358,7 @@ static const struct SpritePalette sSpritePal_HitEffect[] =
 	{NULL},
 };
 
-static const struct OamData gOamCursor =
+static const struct OamData OamCursor =
 {
 	.y = 0,
 	.affineMode = 0,
@@ -373,7 +373,7 @@ static const struct OamData gOamCursor =
 	.paletteNum = 0,
 };
 
-static const struct OamData gOamButton =
+static const struct OamData OamButton =
 {
 	.y = 0,
 	.affineMode = 0,
@@ -388,7 +388,7 @@ static const struct OamData gOamButton =
 	.paletteNum = 0,
 };
 
-static const struct OamData gOamHitEffect =
+static const struct OamData OamHitEffect =
 {
 	.y = 0,
 	.affineMode = 0,
@@ -403,7 +403,7 @@ static const struct OamData gOamHitEffect =
 	.paletteNum = 0,
 };
 
-static const struct OamData gOamHitTools =
+static const struct OamData OamHitTools  =
 {
 	.y = 0,
 	.affineMode = 0,
@@ -418,7 +418,7 @@ static const struct OamData gOamHitTools =
 	.paletteNum = 0,
 };
 
-static const struct OamData gOamItem64x64 =
+static const struct OamData OamItem64x64 =
 {
 	.y = 0,
 	.affineMode = 0,
@@ -433,7 +433,7 @@ static const struct OamData gOamItem64x64 =
 	.paletteNum = 0,
 };
 
-static const union AnimCmd gAnimCmdCursor[] =
+static const union AnimCmd AnimCmdCursor[] =
 {
 	ANIMCMD_FRAME(0, 8),
 	ANIMCMD_FRAME(4, 8),
@@ -442,155 +442,155 @@ static const union AnimCmd gAnimCmdCursor[] =
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd *const gCursorAnim[] =
+static const union AnimCmd *const CursorAnim[] =
 {
-	gAnimCmdCursor,
+	AnimCmdCursor,
 };
 
-static const union AnimCmd gAnimCmdButton_RedNotPressed[] =
+static const union AnimCmd AnimCmdButton_RedNotPressed[] =
 {
 	ANIMCMD_FRAME(0, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd gAnimCmdButton_RedPressed[] =
+static const union AnimCmd AnimCmdButton_RedPressed[] =
 {
 	ANIMCMD_FRAME(32, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd gAnimCmdButton_BlueNotPressed[] =
+static const union AnimCmd AnimCmdButton_BlueNotPressed[] =
 {
 	ANIMCMD_FRAME(64, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd gAnimCmdButton_BluePressed[] =
+static const union AnimCmd AnimCmdButton_BluePressed[] =
 {
-	ANIMCMD_FRAME(96, 30),
+	ANIMCMD_FRAME(MINING_ZONE_SIZE, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd *const gButtonRedAnim[] =
+static const union AnimCmd *const ButtonRedAnim[] =
 {
-	gAnimCmdButton_RedNotPressed,
-	gAnimCmdButton_RedPressed,
+	AnimCmdButton_RedNotPressed,
+	AnimCmdButton_RedPressed,
 };
 
-static const union AnimCmd *const gButtonBlueAnim[] =
+static const union AnimCmd *const ButtonBlueAnim[] =
 {
-	gAnimCmdButton_BluePressed,
-	gAnimCmdButton_BlueNotPressed,
+	AnimCmdButton_BluePressed,
+	AnimCmdButton_BlueNotPressed,
 };
 
-static const union AnimCmd gAnimCmd_EffectHammerHit[] =
+static const union AnimCmd AnimCmd_EffectHammerHit[] =
 {
 	ANIMCMD_FRAME(0, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd gAnimCmd_EffectHammerNotHit[] =
+static const union AnimCmd AnimCmd_EffectHammerNotHit[] =
 {
 	ANIMCMD_FRAME(16, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd gAnimCmd_EffectPickaxeHit[] =
+static const union AnimCmd AnimCmd_EffectPickaxeHit[] =
 {
 	ANIMCMD_FRAME(0, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd gAnimCmd_EffectPickaxeNotHit[] =
+static const union AnimCmd AnimCmd_EffectPickaxeNotHit[] =
 {
 	ANIMCMD_FRAME(16, 30),
 	ANIMCMD_JUMP(0),
 };
 
-static const union AnimCmd *const gHitHammerAnim[] =
+static const union AnimCmd *const HitHammerAnim[] =
 {
-	gAnimCmd_EffectHammerHit,
-	gAnimCmd_EffectHammerNotHit,
+	AnimCmd_EffectHammerHit,
+	AnimCmd_EffectHammerNotHit,
 };
 
-static const union AnimCmd *const gHitPickaxeAnim[] =
+static const union AnimCmd *const HitPickaxeAnim[] =
 {
-	gAnimCmd_EffectPickaxeHit,
-	gAnimCmd_EffectPickaxeNotHit,
+	AnimCmd_EffectPickaxeHit,
+	AnimCmd_EffectPickaxeNotHit,
 };
 
-static const struct SpriteTemplate gSpriteCursor =
+static const struct SpriteTemplate SpriteCursor =
 {
 	.tileTag = TAG_CURSOR,
 	.paletteTag = TAG_CURSOR,
-	.oam = &gOamCursor,
-	.anims = gCursorAnim,
+	.oam = &OamCursor,
+	.anims = CursorAnim,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
 	.callback = SpriteCallbackDummy,
 };
 
-static const struct SpriteTemplate gSpriteButtonRed =
+static const struct SpriteTemplate SpriteButtonRed =
 {
 	.tileTag = TAG_BUTTONS,
 	.paletteTag = TAG_BUTTONS,
-	.oam = &gOamButton,
-	.anims = gButtonRedAnim,
+	.oam = &OamButton,
+	.anims = ButtonRedAnim,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
 	.callback = SpriteCallbackDummy,
 };
 
-static const struct SpriteTemplate gSpriteButtonBlue =
+static const struct SpriteTemplate SpriteButtonBlue =
 {
 	.tileTag = TAG_BUTTONS,
 	.paletteTag = TAG_BUTTONS,
-	.oam = &gOamButton,
-	.anims = gButtonBlueAnim,
+	.oam = &OamButton,
+	.anims = ButtonBlueAnim,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
 	.callback = SpriteCallbackDummy,
 };
 
-static const struct SpriteTemplate gSpriteHitEffectHammer =
+static const struct SpriteTemplate SpriteHitEffectHammer =
 {
 	.tileTag = TAG_HIT_EFFECT_HAMMER,
 	.paletteTag = TAG_PAL_HIT_EFFECTS,
-	.oam = &gOamHitEffect,
+	.oam = &OamHitEffect,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
 	.callback = SpriteCallbackDummy,
 };
 
-static const struct SpriteTemplate gSpriteHitEffectPickaxe =
+static const struct SpriteTemplate SpriteHitEffectPickaxe =
 {
 	.tileTag = TAG_HIT_EFFECT_PICKAXE,
 	.paletteTag = TAG_PAL_HIT_EFFECTS,
-	.oam = &gOamHitEffect,
+	.oam = &OamHitEffect,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
 	.callback = SpriteCallbackDummy,
 };
 
-static const struct SpriteTemplate gSpriteHitHammer =
+static const struct SpriteTemplate SpriteHitHammer =
 {
 	.tileTag = TAG_HIT_HAMMER,
 	.paletteTag = TAG_PAL_HIT_EFFECTS,
-	.oam = &gOamHitTools,
-	.anims = gHitHammerAnim,
+	.oam = &OamHitTools ,
+	.anims = HitHammerAnim,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
 	.callback = SpriteCallbackDummy,
 };
 
-static const struct SpriteTemplate gSpriteHitPickaxe =
+static const struct SpriteTemplate SpriteHitPickaxe =
 {
 	.tileTag = TAG_HIT_PICKAXE,
 	.paletteTag = TAG_PAL_HIT_EFFECTS,
-	.oam = &gOamHitTools,
-	.anims = gHitPickaxeAnim,
+	.oam = &OamHitTools ,
+	.anims = HitPickaxeAnim,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
 	.callback = SpriteCallbackDummy,
@@ -991,7 +991,7 @@ static const struct SpriteTemplate gSpriteStone1x4 =
 {
 	.tileTag = MINING_TAG_STONE_1X4,
 	.paletteTag = MINING_TAG_STONE_1X4,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1002,7 +1002,7 @@ static const struct SpriteTemplate gSpriteStone4x1 =
 {
 	.tileTag = MINING_TAG_STONE_4X1,
 	.paletteTag = MINING_TAG_STONE_4X1,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1013,7 +1013,7 @@ static const struct SpriteTemplate gSpriteStone2x4 =
 {
 	.tileTag = MINING_TAG_STONE_2X4,
 	.paletteTag = MINING_TAG_STONE_2X4,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1024,7 +1024,7 @@ static const struct SpriteTemplate gSpriteStone4x2 =
 {
 	.tileTag = MINING_TAG_STONE_4X2,
 	.paletteTag = MINING_TAG_STONE_4X2,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1035,7 +1035,7 @@ static const struct SpriteTemplate gSpriteStone2x2 =
 {
 	.tileTag = MINING_TAG_STONE_2X2,
 	.paletteTag = MINING_TAG_STONE_2X2,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1046,7 +1046,7 @@ static const struct SpriteTemplate gSpriteStone3x3 =
 {
 	.tileTag = MINING_TAG_STONE_3X3,
 	.paletteTag = MINING_TAG_STONE_3X3,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1057,7 +1057,7 @@ static const struct SpriteTemplate gSpriteStoneSnake1 =
 {
 	.tileTag = MINING_TAG_STONE_SNAKE1,
 	.paletteTag = MINING_TAG_STONE_SNAKE1,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1068,7 +1068,7 @@ static const struct SpriteTemplate gSpriteStoneSnake2 =
 {
 	.tileTag = MINING_TAG_STONE_SNAKE2,
 	.paletteTag = MINING_TAG_STONE_SNAKE2,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1079,7 +1079,7 @@ static const struct SpriteTemplate gSpriteStoneMushroom1 =
 {
 	.tileTag = MINING_TAG_STONE_MUSHROOM1,
 	.paletteTag = MINING_TAG_STONE_MUSHROOM1,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1090,7 +1090,7 @@ static const struct SpriteTemplate gSpriteStoneMushroom2 =
 {
 	.tileTag = MINING_TAG_STONE_MUSHROOM2,
 	.paletteTag = MINING_TAG_STONE_MUSHROOM2,
-	.oam = &gOamItem64x64,
+	.oam = &OamItem64x64,
 	.anims = gDummySpriteAnimTable,
 	.images = NULL,
 	.affineAnims = gDummySpriteAffineAnimTable,
@@ -1102,8 +1102,8 @@ struct MiningItem
 {
 	u32 bagItemId;
 	u32 tag;
-	const struct CompressedSpriteSheet* sheet;
-	const u16* paldata;
+	const struct CompressedSpriteSheet *sheet;
+	const u16 *paldata;
 };
 
 static const struct MiningItem MiningItemList[] =
@@ -1310,8 +1310,8 @@ static u32 MiningUtil_GetTotalTileAmount(u32 itemId)
 	}
 	if (result == 0)
 		return result+1;
-	else
-		return result;
+	
+	return result;
 }
 
 static u32 MiningUtil_GetLeftValue(u32 itemId)
@@ -1329,6 +1329,7 @@ static u32 MiningUtil_GetLeftValue(u32 itemId)
 			}
 		}
 	}
+
 	return left - 1;
 }
 
@@ -1347,6 +1348,7 @@ static u32 MiningUtil_GetTopValue(u32 itemId)
 			}
 		}
 	}
+
 	return top - 1;
 }
 
@@ -1387,7 +1389,7 @@ static void Mining_Init(MainCallback callback)
 	sMiningUiState->buriedStones[1].isSelected = TRUE;
 
 	// Generate Items
-	#if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
+#if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
 	u32 amountItemsToSelect;
 
 	if (MINING_DEBUG_DESIRED_NUMBER_OF_ITEMS == 0)
@@ -1400,7 +1402,7 @@ static void Mining_Init(MainCallback callback)
 	for (u32 i = 0; i < amountItemsToSelect; i++)
 		sMiningUiState->buriedItems[i].isSelected = TRUE;
 
-	#else
+#else
 	u32 amountItemsToSelect = RANDOM(3) + 2; // The `+ 2` says that the min. amount of items to be generated are 2.
 
 	// Fisher-Yates shuffle implementation
@@ -1423,14 +1425,14 @@ static void Mining_Init(MainCallback callback)
 	{
 		sMiningUiState->buriedItems[zones[i]].isSelected = TRUE;
 	}
-	#endif
+#endif
 
 	SetMainCallback2(Mining_SetupCB);
 }
 
 static void Mining_SetupCB(void)
 {
-	switch(gMain.state)
+	switch (gMain.state)
 	{
 		case STATE_CLEAR_SCREEN:
 			SetVBlankHBlankCallbacksToNull();
@@ -1440,7 +1442,6 @@ static void Mining_SetupCB(void)
 			CpuFill32(0, (void *)OAM, OAM_SIZE);
 			gMain.state++;
 			break;
-
 		case STATE_RESET_DATA:
 			FreeAllSpritePalettes();
 			ResetPaletteFade();
@@ -1450,19 +1451,18 @@ static void Mining_SetupCB(void)
 			LoadOam();
 			gMain.state++;
 			break;
-
 		case STATE_INIT_BGS:
 			if (Mining_InitBgs() == TRUE)
 			{
 				sMiningUiState->loadGameState = 0;
-			} else
+			} 
+			else
 			{
 				Mining_FadeAndBail();
 				return;
 			}
 			gMain.state++;
 			break;
-
 		case STATE_LOAD_BGS:
 			if (Mining_LoadBgGraphics() == TRUE)
 			{
@@ -1470,7 +1470,6 @@ static void Mining_SetupCB(void)
 				gMain.state++;
 			}
 			break;
-
 		case STATE_LOAD_SPRITES:
 			if (!gPaletteFade.active)
 			{
@@ -1479,17 +1478,14 @@ static void Mining_SetupCB(void)
 				gMain.state++;
 			}
 			break;
-
 		case STATE_WAIT_FADE:
 			CreateTask(Task_MiningWaitFadeIn, 0);
 			gMain.state++;
 			break;
-
 		case STATE_FADE:
 			BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
 			gMain.state++;
 			break;
-
 		case STATE_SET_CALLBACKS:
 			SetVBlankCallback(Mining_VBlankCB);
 			SetMainCallback2(Mining_MainCB);
@@ -1507,11 +1503,7 @@ static bool32 Mining_InitBgs(void)
 	sMiningUiState->sBg2TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
 	sMiningUiState->sBg3TilemapBuffer = AllocZeroed(TILEMAP_BUFFER_SIZE);
 
-	if (sMiningUiState->sBg3TilemapBuffer == NULL)
-		return FALSE;
-	else if (sMiningUiState->sBg2TilemapBuffer == NULL)
-		return FALSE;
-	else if (sMiningUiState->sBg1TilemapBuffer == NULL)
+	if (sMiningUiState->sBg1TilemapBuffer == NULL || sMiningUiState->sBg2TilemapBuffer == NULL || sMiningUiState->sBg3TilemapBuffer == NULL)
 		return FALSE;
 
 	ResetBgsAndClearDma3BusyFlags(0);
@@ -1553,7 +1545,7 @@ static void Mining_MainCB(void)
 
 static void MoveItemSprites(s16 dx, s16 dy)
 {
-	if (sMiningUiState->toggleShakeDuringAnimation == FALSE)
+	if (!sMiningUiState->toggleShakeDuringAnimation)
 	{
 		for (u32 i = 0; i < MAX_SPRITES; i++)
 		{
@@ -1575,7 +1567,7 @@ static void MiningUi_Shake(u8 taskId)
 			sMiningUiState->shakeState++;
 			break;
 		case 1:
-			if (sMiningUiState->toggleShakeDuringAnimation == FALSE)
+			if (!sMiningUiState->toggleShakeDuringAnimation)
 			{
 				SetGpuReg(REG_OFFSET_BG3HOFS, 1);
 				SetGpuReg(REG_OFFSET_BG2HOFS, 1);
@@ -1591,7 +1583,7 @@ static void MiningUi_Shake(u8 taskId)
 			sMiningUiState->shakeState++;
 			break;
 		case 4:
-			if (sMiningUiState->toggleShakeDuringAnimation == FALSE)
+			if (!sMiningUiState->toggleShakeDuringAnimation)
 			{
 				SetGpuReg(REG_OFFSET_BG3HOFS, -2);
 				SetGpuReg(REG_OFFSET_BG2HOFS, -2);
@@ -1610,7 +1602,7 @@ static void MiningUi_Shake(u8 taskId)
 			sMiningUiState->shakeState++;
 			break;
 		case 7:
-			if (sMiningUiState->toggleShakeDuringAnimation == FALSE)
+			if (!sMiningUiState->toggleShakeDuringAnimation)
 			{
 				SetGpuReg(REG_OFFSET_BG3VOFS, -2);
 				SetGpuReg(REG_OFFSET_BG2VOFS, -2);
@@ -1625,7 +1617,7 @@ static void MiningUi_Shake(u8 taskId)
 			sMiningUiState->shakeState++;
 			break;
 		case 10:
-			if (sMiningUiState->toggleShakeDuringAnimation == FALSE)
+			if (!sMiningUiState->toggleShakeDuringAnimation)
 			{
 				SetGpuReg(REG_OFFSET_BG2HOFS, 2);
 				SetGpuReg(REG_OFFSET_BG3HOFS, 2);
@@ -1643,7 +1635,7 @@ static void MiningUi_Shake(u8 taskId)
 			sMiningUiState->shakeState++;
 			break;
 		case 13:
-			if (sMiningUiState->toggleShakeDuringAnimation == FALSE)
+			if (!sMiningUiState->toggleShakeDuringAnimation)
 			{
 				SetGpuReg(REG_OFFSET_BG3HOFS, -1);
 				SetGpuReg(REG_OFFSET_BG2HOFS, -1);
@@ -1707,18 +1699,15 @@ static void Mining_FadeAndBail(void)
 	SetMainCallback2(Mining_MainCB);
 }
 
-#define TILE_POS(x, y) (32 * (y) + (x))
-
 static void OverwriteTileDataInTilemapBuffer(u8 tile, u8 x, u8 y, u16 *tilemapBuf, u8 pal)
 {
-	tilemapBuf[TILE_POS(x, y)] = tile | (pal << 12);
+	tilemapBuf[32 * y + x] = tile | (pal << 12);
 }
-
-#undef TILE_POS
 
 static bool32 Mining_LoadBgGraphics(void)
 {
 	u16 *tilemapBuf = GetBgTilemapBuffer(1);
+	
 	switch (sMiningUiState->loadGameState)
 	{
 		case 0:
@@ -1753,12 +1742,13 @@ static bool32 Mining_LoadBgGraphics(void)
 			sMiningUiState->loadGameState = STATE_GAME_START;
 			return TRUE;
 	}
+
 	return FALSE;
 }
 
 static void ClearItemMap(void)
 {
-	for (u32 i = 0; i < 96; i++)
+	for (u32 i = 0; i < MINING_ZONE_SIZE; i++)
 		sMiningUiState->itemMap[i] = MINING_ITEM_TILE_NONE;
 }
 
@@ -1903,11 +1893,11 @@ static void Mining_LoadSpriteGraphics(void)
 	}
 	#endif
 
-	sMiningUiState->cursorSpriteIndex = CreateSprite(&gSpriteCursor, 8, 40, 0);
+	sMiningUiState->cursorSpriteIndex = CreateSprite(&SpriteCursor, 8, 40, 0);
 	sMiningUiState->cursorX = 0;
 	sMiningUiState->cursorY = 2;
-	sMiningUiState->bRedSpriteIndex = CreateSprite(&gSpriteButtonRed, 217, 78, 0);
-	sMiningUiState->bBlueSpriteIndex = CreateSprite(&gSpriteButtonBlue, 217, 138, 1);
+	sMiningUiState->bRedSpriteIndex = CreateSprite(&SpriteButtonRed, 217, 78, 0);
+	sMiningUiState->bBlueSpriteIndex = CreateSprite(&SpriteButtonBlue, 217, 138, 1);
 	sMiningUiState->tool = BLUE_BUTTON;
 	LoadSpritePalette(sSpritePal_HitEffect);
 	LoadCompressedSpriteSheet(sSpriteSheet_HitEffectHammer);
@@ -1940,8 +1930,8 @@ static void Task_MiningMainInput(u8 taskId)
 
 		if (sMiningUiState->tool == RED_BUTTON)
 		{
-			sMiningUiState->ShakeHitEffect = CreateSprite(&gSpriteHitEffectHammer, (sMiningUiState->cursorX * 16) + 8, (sMiningUiState->cursorY * 16) + 8, 0);
-			sMiningUiState->ShakeHitTool = CreateSprite(&gSpriteHitHammer, (sMiningUiState->cursorX * 16) + 24, sMiningUiState->cursorY * 16, 0);
+			sMiningUiState->ShakeHitEffect = CreateSprite(&SpriteHitEffectHammer, (sMiningUiState->cursorX * 16) + 8, (sMiningUiState->cursorY * 16) + 8, 0);
+			sMiningUiState->ShakeHitTool = CreateSprite(&SpriteHitHammer, (sMiningUiState->cursorX * 16) + 24, sMiningUiState->cursorY * 16, 0);
 
 			if (sMiningUiState->layerMap[cursorPos] == 6 && sMiningUiState->itemMap[cursorPos] > 4)
 			{
@@ -1958,8 +1948,8 @@ static void Task_MiningMainInput(u8 taskId)
 		}
 		else
 		{
-			sMiningUiState->ShakeHitEffect = CreateSprite(&gSpriteHitEffectPickaxe, (sMiningUiState->cursorX * 16) + 8, (sMiningUiState->cursorY * 16) + 8, 0);
-			sMiningUiState->ShakeHitTool = CreateSprite(&gSpriteHitPickaxe, (sMiningUiState->cursorX * 16) + 24, sMiningUiState->cursorY * 16, 0);
+			sMiningUiState->ShakeHitEffect = CreateSprite(&SpriteHitEffectPickaxe, (sMiningUiState->cursorX * 16) + 8, (sMiningUiState->cursorY * 16) + 8, 0);
+			sMiningUiState->ShakeHitTool = CreateSprite(&SpriteHitPickaxe, (sMiningUiState->cursorX * 16) + 24, sMiningUiState->cursorY * 16, 0);
 			if (sMiningUiState->layerMap[cursorPos] == 6 && sMiningUiState->itemMap[cursorPos] > 4)
 			{
 				m4aMPlayStop(&gMPlayInfo_SE1);
@@ -2205,7 +2195,7 @@ static void Mining_UpdateStressLevel(void)
 }
 
 // Draws a tile layer to the screen.
-static void Terrain_DrawLayerTileToScreen(u32 x, u32 y, u32 layer, u16* ptr)
+static void Terrain_DrawLayerTileToScreen(u32 x, u32 y, u32 layer, u16 *ptr)
 {
 	u32 tileX = x * 2;
 	u32 tileY = y * 2;
@@ -2263,7 +2253,8 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
 
 	TempSpriteTemplate.tileTag = TileTag;
 	TempSpriteTemplate.paletteTag = PalTag;
-	TempSpriteTemplate.oam = &gOamItem64x64;
+	TempSpriteTemplate.oam = &OamItem64x64;
+	
 	return TempSpriteTemplate;
 }
 
@@ -2333,7 +2324,6 @@ static void DrawItemSprite(u32 x, u32 y, u32 itemId, u32 itemNumPalTag, u32 item
 			LoadCompressedSpriteSheet(MiningItemList[itemId].sheet);
 			sMiningUiState->buriedItems[itemStateId].spriteId = CreateSprite(&gSpriteTemplate, posX+POS_OFFS_64X64, posY+POS_OFFS_64X64, 3);
 			return;
-			break;
 	}
 }
 
@@ -2360,13 +2350,14 @@ static void OverwriteItemMapData(u32 posX, u32 posY, u32 itemStateId, u32 itemId
 	posY + MiningUtil_GetTopValue(itemId) > yBorder
 #define IGNORE_COORDS 255
 
-static u32 CheckIfItemCanBePlaced(u32 itemId, u32 posX, u32 posY, u32 xBorder, u32 yBorder)
+static bool32 CheckIfItemCanBePlaced(u32 itemId, u32 posX, u32 posY, u32 xBorder, u32 yBorder)
 {
 	for (u32 i = 1; i <= 4; i++)
 	{
 		if (BORDERCHECK_COND(itemId))
 			return FALSE; // If it cannot be placed, return false, that means that item placement should regenerate
 	}
+
 	return TRUE; // If it can be placed, return true
 }
 
@@ -2411,14 +2402,14 @@ static void DoDrawRandomItem(u32 itemStateId, u32 itemId)
 			break;
 	}
 
-	for(y = yMin; y <= yMax; y++)
+	for (y = yMin; y <= yMax; y++)
 	{
-		for(x = xMin; x <= xMax; x++)
+		for (x = xMin; x <= xMax; x++)
 		{
 			if (isItemPlaced)
 				continue;
 
-			if (Random() <= 49151)
+			if (Random() <= MINING_ITEM_PLACEMENT_THRESHOLD)
 				continue;
 
 			if (MiningUtil_GetTopValue(itemId) == 3)
@@ -2454,6 +2445,7 @@ static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId) // PSF magic
 				return FALSE;
 		}
 	}
+
 	return TRUE;
 }
 
@@ -2472,6 +2464,7 @@ static bool32 DoesStoneFitInItemMap(u32 itemId)
 				return TRUE;
 		}
 	}
+
 	return FALSE;
 }
 #endif
@@ -2498,9 +2491,9 @@ static void HandleItemState(u32 itemId)
 
 	if (sMiningUiState->buriedItems[itemId].buriedState < full && sMiningUiState->buriedItems[itemId].isSelected)
 	{
-		for(u32 i = 0; i < 96; i++)
+		for (u32 i = 0; i < MINING_ZONE_SIZE; i++)
 		{
-			if(sMiningUiState->itemMap[i] == itemId + 1 && sMiningUiState->layerMap[i] == 6)
+			if (sMiningUiState->itemMap[i] == itemId + 1 && sMiningUiState->layerMap[i] == 6)
 			{
 				sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
 				sMiningUiState->buriedItems[itemId].buriedState++;
@@ -2523,9 +2516,9 @@ static void Mining_CheckItemFound(void)
 	HandleItemState(2);
 	HandleItemState(3);
 
-	for (u32 i = 0; i < 96; i++)
+	for (u32 i = 0; i < MINING_ZONE_SIZE; i++)
 	{
-		if(sMiningUiState->itemMap[i] == 6 && sMiningUiState->layerMap[i] == 6)
+		if (sMiningUiState->itemMap[i] == 6 && sMiningUiState->layerMap[i] == 6)
 			sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
 	}
 }
@@ -2560,7 +2553,7 @@ static void Mining_DrawRandomTerrain(void)
 	u16 *ptr = GetBgTilemapBuffer(2);
 
 	// Start by placing blank layer 3 rocks
-	for (i = 0; i < 96; ++i)
+	for (i = 0; i < MINING_ZONE_SIZE; ++i)
 		sMiningUiState->layerMap[i] = 2;
 
 	// Create patches of lighter dirt areas
@@ -2626,12 +2619,12 @@ static void Mining_DrawRandomTerrain(void)
 	// Why 'y = 2'? Because we need to have a distance from the top of the screen, which is 32px -> 2 * 16
 	for (y = 2; y < MINING_ZONE_HEIGHT + 2; y++)
 	{
-		for (x = 0; x < MINING_ZONE_WIDTH && i < 96; x++, i++)
+		for (x = 0; x < MINING_ZONE_WIDTH && i < MINING_ZONE_SIZE; x++, i++)
 			Terrain_DrawLayerTileToScreen(x, y, sMiningUiState->layerMap[i], ptr);
 	}
 }
 
-static void Terrain_UpdateLayerTileOnScreen(u16* ptr, s32 ofsX, s32 ofsY)
+static void Terrain_UpdateLayerTileOnScreen(u16 *ptr, s32 ofsX, s32 ofsY)
 {
 	u32 i = (sMiningUiState->cursorY - 2 + ofsY) * 12 + sMiningUiState->cursorX + ofsX; // It needs the `-2` because the cursorY value started at `2`
 	u32 tileX = (sMiningUiState->cursorX + ofsX) * 2;
@@ -2682,7 +2675,7 @@ static void Terrain_UpdateLayerTileOnScreen(u16* ptr, s32 ofsX, s32 ofsY)
 	}
 }
 
-static u32 Terrain_Pickaxe_OverwriteTiles(u16* ptr)
+static bool32 Terrain_Pickaxe_OverwriteTiles(u16 *ptr)
 {
 	u32 pos = sMiningUiState->cursorX + (sMiningUiState->cursorY - 2) * 12;
 
@@ -2707,15 +2700,13 @@ static u32 Terrain_Pickaxe_OverwriteTiles(u16* ptr)
 		{
 			Terrain_UpdateLayerTileOnScreen(ptr, 0, 0);
 		}
-		return 0;
+		return FALSE;
 	}
-	else
-	{
-		return 1;
-	}
+
+	return TRUE;
 }
 
-static void Terrain_Hammer_OverwriteTiles(u16* ptr)
+static void Terrain_Hammer_OverwriteTiles(u16 *ptr)
 {
 	bool32 isItemDugUp = Terrain_Pickaxe_OverwriteTiles(ptr);
 	u32 pos = sMiningUiState->cursorX + (sMiningUiState->cursorY - 2) * 12;
@@ -2807,7 +2798,7 @@ static void PrintMessage(const u8 *string)
 	u32 x = 0;
 	u32 y = 1;
 
-	u8 txtColor[]= {TEXT_COLOR_WHITE, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY};
+	u8 txtColor[] = {TEXT_COLOR_WHITE, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_LIGHT_GRAY};
 
 	DrawDialogFrameWithCustomTileAndPalette(WIN_MSG, FALSE, 20, 15);
 	FillWindowPixelBuffer(WIN_MSG, PIXEL_FILL(TEXT_COLOR_WHITE));
@@ -2835,6 +2826,7 @@ static bool32 ClearWindowPlaySelectButtonPress(void)
 	if (JOY_NEW(A_BUTTON) && !sMiningUiState->isCollapseAnimActive && !sMiningUiState->shouldShake)
 	{
 		PlaySE(SE_SELECT);
+		
 		switch (sMiningUiState->loadGameState)
 		{
 			case STATE_GAME_FINISH:
@@ -2851,8 +2843,10 @@ static bool32 ClearWindowPlaySelectButtonPress(void)
 				ClearDialogWindowAndFrame(WIN_MSG, TRUE);
 				break;
 		}
+
 		return TRUE;
 	}
+
 	return FALSE;
 }
 
@@ -2886,7 +2880,7 @@ static void Task_WaitButtonPressOpening(u8 taskId)
 	}
 	else if (JOY_NEW(A_BUTTON))
 	{
-		while(1)
+		while(TRUE)
 		{
 			if (!RunTextPrintersAndIsPrinter0Active())
 				break;
@@ -2978,13 +2972,13 @@ static void CheckItemAndPrint(u8 taskId, u32 itemIndex, u32 itemId)
 
 static void MakeCursorInvisible(void)
 {
-	gSprites[sMiningUiState->cursorSpriteIndex].invisible = 1;
+	gSprites[sMiningUiState->cursorSpriteIndex].invisible = TRUE;
 }
 
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_INFINITE_HITS == FALSE
 static void Task_WallCollapseDelay(u8 taskId)
 {
-	u16* tilemapBuf = GetBgTilemapBuffer(1);
+	u16 *tilemapBuf = GetBgTilemapBuffer(1);
 
 	switch(sMiningUiState->delayCounter)
 	{
@@ -3013,7 +3007,7 @@ static void Task_WallCollapseDelay(u8 taskId)
 		case 38:
 			for (u32 j = 0; j < 30; j++)
 			{
-				OverwriteTileDataInTilemapBuffer(1, j, (sMiningUiState->delayCounter/2), tilemapBuf, 2);
+				OverwriteTileDataInTilemapBuffer(1, j, (sMiningUiState->delayCounter / 2), tilemapBuf, 2);
 				ScheduleBgCopyTilemapToVram(1);
 				DoScheduledBgTilemapCopiesToVram();
 			}

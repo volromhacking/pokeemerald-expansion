@@ -5,4 +5,4 @@
 
 void StartMining(void);
 
-#endif
+#endif // GUARD_MINING_MINIGAME_H
