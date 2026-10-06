@@ -2364,11 +2364,10 @@ static bool32 CheckIfItemCanBePlaced(u32 itemId, u32 posX, u32 posY, u32 xBorder
 
 static void DoDrawRandomItem(u32 itemStateId, u32 itemId)
 {
-	u32 y;
-	u32 x;
-	bool32 isItemPlaced = FALSE;
-	u32 xMax, yMax, xMin, yMin;
-	u32 paletteTag;
+	u32 x, y, xMax, yMax, xMin, yMin, paletteTag;
+	u32 validX[24] = {0};
+	u32 validY[24] = {0};
+	u32 numValid = 0;
 
 	switch(itemStateId)
 	{
@@ -2407,22 +2406,21 @@ static void DoDrawRandomItem(u32 itemStateId, u32 itemId)
 	{
 		for (x = xMin; x <= xMax; x++)
 		{
-			if (isItemPlaced)
-				continue;
+			if (CheckIfItemCanBePlaced(itemId, x, y, xMax, yMax))
+			{
+				validX[numValid] = x;
+				validY[numValid] = y;
+				numValid++;
+			}
 
-			if (Random() <= MINING_ITEM_PLACEMENT_THRESHOLD)
-				continue;
+			if (numValid == 0)
+				return; // safety, shouldnt happen anyway
 
-			if (MiningUtil_GetTopValue(itemId) == 3)
-				y = yMin;
+			u32 pick = Random() % numValid;
 
-			if (!CheckIfItemCanBePlaced(itemId, x, y, xMax, yMax))
-				continue;
-
-			DrawItemSprite(x,y,itemId, paletteTag, itemStateId - 1);
-			OverwriteItemMapData(x, y, itemStateId, itemId); // For the collection logic, overwrite the item map data
-			isItemPlaced = TRUE;
-			break;
+			DrawItemSprite(validX[pick], validY[pick], itemId, paletteTag, itemStateId - 1);
+			OverwriteItemMapData(validX[pick], validY[pick], itemStateId, itemId); // For the collection logic, overwrite the item map data
+			return;
 		}
 	}
 }
