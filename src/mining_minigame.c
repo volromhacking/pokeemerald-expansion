@@ -1481,62 +1481,62 @@ static void Mining_SetupCB(void)
 {
     switch (gMain.state)
     {
-        case STATE_CLEAR_SCREEN:
-            SetVBlankHBlankCallbacksToNull();
-            ClearScheduledBgCopiesToVram();
-            ScanlineEffect_Stop();
-            CpuFill16(0, (void *)VRAM, VRAM_SIZE);
-            CpuFill32(0, (void *)OAM, OAM_SIZE);
+    case STATE_CLEAR_SCREEN:
+        SetVBlankHBlankCallbacksToNull();
+        ClearScheduledBgCopiesToVram();
+        ScanlineEffect_Stop();
+        CpuFill16(0, (void *)VRAM, VRAM_SIZE);
+        CpuFill32(0, (void *)OAM, OAM_SIZE);
+        gMain.state++;
+        break;
+    case STATE_RESET_DATA:
+        FreeAllSpritePalettes();
+        ResetPaletteFade();
+        ResetSpriteData();
+        ResetTasks();
+        BuildOamBuffer();
+        LoadOam();
+        gMain.state++;
+        break;
+    case STATE_INIT_BGS:
+        if (Mining_InitBgs() == TRUE)
+        {
+            sMiningUiState->loadGameState = 0;
+        }
+        else
+        {
+            Mining_FadeAndBail();
+            return;
+        }
+        gMain.state++;
+        break;
+    case STATE_LOAD_BGS:
+        if (Mining_LoadBgGraphics() == TRUE)
+        {
+            InitMiningWindows();
             gMain.state++;
-            break;
-        case STATE_RESET_DATA:
-            FreeAllSpritePalettes();
-            ResetPaletteFade();
-            ResetSpriteData();
-            ResetTasks();
-            BuildOamBuffer();
-            LoadOam();
+        }
+        break;
+    case STATE_LOAD_SPRITES:
+        if (!gPaletteFade.active)
+        {
+            InitBuriedItems();
+            Mining_LoadSpriteGraphics();
             gMain.state++;
-            break;
-        case STATE_INIT_BGS:
-            if (Mining_InitBgs() == TRUE)
-            {
-                sMiningUiState->loadGameState = 0;
-            } 
-            else
-            {
-                Mining_FadeAndBail();
-                return;
-            }
-            gMain.state++;
-            break;
-        case STATE_LOAD_BGS:
-            if (Mining_LoadBgGraphics() == TRUE)
-            {
-                InitMiningWindows();
-                gMain.state++;
-            }
-            break;
-        case STATE_LOAD_SPRITES:
-            if (!gPaletteFade.active)
-            {
-                InitBuriedItems();
-                Mining_LoadSpriteGraphics();
-                gMain.state++;
-            }
-            break;
-        case STATE_WAIT_FADE:
-            CreateTask(Task_MiningWaitFadeIn, 0);
-            gMain.state++;
-            break;
-        case STATE_FADE:
-            BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
-            gMain.state++;
-            break;
-        case STATE_SET_CALLBACKS:
-            SetVBlankCallback(Mining_VBlankCB);
-            SetMainCallback2(Mining_MainCB);
-            break;
+        }
+        break;
+    case STATE_WAIT_FADE:
+        CreateTask(Task_MiningWaitFadeIn, 0);
+        gMain.state++;
+        break;
+    case STATE_FADE:
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
+        gMain.state++;
+        break;
+    case STATE_SET_CALLBACKS:
+        SetVBlankCallback(Mining_VBlankCB);
+        SetMainCallback2(Mining_MainCB);
+        break;
     }
 }
 
@@ -1606,125 +1606,125 @@ static void MiningUi_Shake(u8 taskId)
 {
     switch (sMiningUiState->shakeState)
     {
-        case 0: // Left 1 - Down 1
-            MakeCursorInvisible();
-            if (!IsStressLevelMax() && Random() % 100 < 20) // 20 % chance of not shaking the screen
-                sMiningUiState->toggleShakeDuringAnimation = TRUE;
-            MoveItemSprites(-1, 1);
-            sMiningUiState->shakeState++;
-            break;
-        case 1:
-            if (!sMiningUiState->toggleShakeDuringAnimation)
-            {
-                SetGpuReg(REG_OFFSET_BG3HOFS, 1);
-                SetGpuReg(REG_OFFSET_BG2HOFS, 1);
-                SetGpuReg(REG_OFFSET_BG3VOFS, -1);
-                SetGpuReg(REG_OFFSET_BG2VOFS, -1);
-            }
-            sMiningUiState->shakeState++;
-            break;
-        case 3: // Right 2 - Up 2
-            MoveItemSprites(3, -3);
-            gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
-            gSprites[sMiningUiState->ShakeHitTool].invisible = 1;
-            sMiningUiState->shakeState++;
-            break;
-        case 4:
-            if (!sMiningUiState->toggleShakeDuringAnimation)
-            {
-                SetGpuReg(REG_OFFSET_BG3HOFS, -2);
-                SetGpuReg(REG_OFFSET_BG2HOFS, -2);
-                SetGpuReg(REG_OFFSET_BG3VOFS, 2);
-                SetGpuReg(REG_OFFSET_BG2VOFS, 2);
-            }
-            sMiningUiState->shakeState++;
-            break;
-        case 6: // Down 2
-            MoveItemSprites(-2, 4);
-            if (!IsStressLevelMax())
-            {
-                gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
-                gSprites[sMiningUiState->ShakeHitTool].invisible = 0;
-            }
-            sMiningUiState->shakeState++;
-            break;
-        case 7:
-            if (!sMiningUiState->toggleShakeDuringAnimation)
-            {
-                SetGpuReg(REG_OFFSET_BG3VOFS, -2);
-                SetGpuReg(REG_OFFSET_BG2VOFS, -2);
-                SetGpuReg(REG_OFFSET_BG3HOFS, 0);
-                SetGpuReg(REG_OFFSET_BG2HOFS, 0);
-            }
-            sMiningUiState->shakeState++;
-            break;
-        case 9: // Left 2 - Up 2
-            MoveItemSprites(-2, -4);
-            gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
-            sMiningUiState->shakeState++;
-            break;
-        case 10:
-            if (!sMiningUiState->toggleShakeDuringAnimation)
-            {
-                SetGpuReg(REG_OFFSET_BG2HOFS, 2);
-                SetGpuReg(REG_OFFSET_BG3HOFS, 2);
-                SetGpuReg(REG_OFFSET_BG3VOFS, 2);
-                SetGpuReg(REG_OFFSET_BG2VOFS, 2);
-            }
-            sMiningUiState->shakeState++;
-            break;
-        case 12: // Right 1 - Down 1
-            MoveItemSprites(3, 3);
-            if (!IsStressLevelMax())
-                gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
-            gSprites[sMiningUiState->ShakeHitTool].x += 7;
-            StartSpriteAnim(&gSprites[sMiningUiState->ShakeHitTool], 1);
-            sMiningUiState->shakeState++;
-            break;
-        case 13:
-            if (!sMiningUiState->toggleShakeDuringAnimation)
-            {
-                SetGpuReg(REG_OFFSET_BG3HOFS, -1);
-                SetGpuReg(REG_OFFSET_BG2HOFS, -1);
-                SetGpuReg(REG_OFFSET_BG3VOFS, -1);
-                SetGpuReg(REG_OFFSET_BG2VOFS, -1);
-            }
-            sMiningUiState->shakeState++;
-            break;
-        case 15:
-            MoveItemSprites(-1, -1);
-            sMiningUiState->shakeState++;
-            break;
-        case 16:
-            SetGpuReg(REG_OFFSET_BG3VOFS, 0);
+    case 0: // Left 1 - Down 1
+        MakeCursorInvisible();
+        if (!IsStressLevelMax() && Random() % 100 < 20) // 20 % chance of not shaking the screen
+            sMiningUiState->toggleShakeDuringAnimation = TRUE;
+        MoveItemSprites(-1, 1);
+        sMiningUiState->shakeState++;
+        break;
+    case 1:
+        if (!sMiningUiState->toggleShakeDuringAnimation)
+        {
+            SetGpuReg(REG_OFFSET_BG3HOFS, 1);
+            SetGpuReg(REG_OFFSET_BG2HOFS, 1);
+            SetGpuReg(REG_OFFSET_BG3VOFS, -1);
+            SetGpuReg(REG_OFFSET_BG2VOFS, -1);
+        }
+        sMiningUiState->shakeState++;
+        break;
+    case 3: // Right 2 - Up 2
+        MoveItemSprites(3, -3);
+        gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
+        gSprites[sMiningUiState->ShakeHitTool].invisible = 1;
+        sMiningUiState->shakeState++;
+        break;
+    case 4:
+        if (!sMiningUiState->toggleShakeDuringAnimation)
+        {
+            SetGpuReg(REG_OFFSET_BG3HOFS, -2);
+            SetGpuReg(REG_OFFSET_BG2HOFS, -2);
+            SetGpuReg(REG_OFFSET_BG3VOFS, 2);
+            SetGpuReg(REG_OFFSET_BG2VOFS, 2);
+        }
+        sMiningUiState->shakeState++;
+        break;
+    case 6: // Down 2
+        MoveItemSprites(-2, 4);
+        if (!IsStressLevelMax())
+        {
+            gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
+            gSprites[sMiningUiState->ShakeHitTool].invisible = 0;
+        }
+        sMiningUiState->shakeState++;
+        break;
+    case 7:
+        if (!sMiningUiState->toggleShakeDuringAnimation)
+        {
+            SetGpuReg(REG_OFFSET_BG3VOFS, -2);
+            SetGpuReg(REG_OFFSET_BG2VOFS, -2);
             SetGpuReg(REG_OFFSET_BG3HOFS, 0);
             SetGpuReg(REG_OFFSET_BG2HOFS, 0);
-            SetGpuReg(REG_OFFSET_BG2VOFS, 0);
-            DestroySprite(&gSprites[sMiningUiState->ShakeHitTool]);
-            DestroySprite(&gSprites[sMiningUiState->ShakeHitEffect]);
-            if (sMiningUiState->shakeDuration > 0)
-            {
-                sMiningUiState->shakeDuration--;
-                sMiningUiState->shakeState = 0;
-                sMiningUiState->toggleShakeDuringAnimation = FALSE;
-                break;
-            }
-            #if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_INFINITE_HITS == TRUE
-            gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
-            #else
-            if (IsStressLevelMax())
-                WallCollapseAnimation();
-            if (!IsStressLevelMax())
-                gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
-            #endif
+        }
+        sMiningUiState->shakeState++;
+        break;
+    case 9: // Left 2 - Up 2
+        MoveItemSprites(-2, -4);
+        gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
+        sMiningUiState->shakeState++;
+        break;
+    case 10:
+        if (!sMiningUiState->toggleShakeDuringAnimation)
+        {
+            SetGpuReg(REG_OFFSET_BG2HOFS, 2);
+            SetGpuReg(REG_OFFSET_BG3HOFS, 2);
+            SetGpuReg(REG_OFFSET_BG3VOFS, 2);
+            SetGpuReg(REG_OFFSET_BG2VOFS, 2);
+        }
+        sMiningUiState->shakeState++;
+        break;
+    case 12: // Right 1 - Down 1
+        MoveItemSprites(3, 3);
+        if (!IsStressLevelMax())
+            gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
+        gSprites[sMiningUiState->ShakeHitTool].x += 7;
+        StartSpriteAnim(&gSprites[sMiningUiState->ShakeHitTool], 1);
+        sMiningUiState->shakeState++;
+        break;
+    case 13:
+        if (!sMiningUiState->toggleShakeDuringAnimation)
+        {
+            SetGpuReg(REG_OFFSET_BG3HOFS, -1);
+            SetGpuReg(REG_OFFSET_BG2HOFS, -1);
+            SetGpuReg(REG_OFFSET_BG3VOFS, -1);
+            SetGpuReg(REG_OFFSET_BG2VOFS, -1);
+        }
+        sMiningUiState->shakeState++;
+        break;
+    case 15:
+        MoveItemSprites(-1, -1);
+        sMiningUiState->shakeState++;
+        break;
+    case 16:
+        SetGpuReg(REG_OFFSET_BG3VOFS, 0);
+        SetGpuReg(REG_OFFSET_BG3HOFS, 0);
+        SetGpuReg(REG_OFFSET_BG2HOFS, 0);
+        SetGpuReg(REG_OFFSET_BG2VOFS, 0);
+        DestroySprite(&gSprites[sMiningUiState->ShakeHitTool]);
+        DestroySprite(&gSprites[sMiningUiState->ShakeHitEffect]);
+        if (sMiningUiState->shakeDuration > 0)
+        {
+            sMiningUiState->shakeDuration--;
             sMiningUiState->shakeState = 0;
-            sMiningUiState->shouldShake = FALSE;
             sMiningUiState->toggleShakeDuringAnimation = FALSE;
-            DestroyTask(taskId);
             break;
-        default:
-            sMiningUiState->shakeState++;
-            break;
+        }
+        #if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_INFINITE_HITS == TRUE
+        gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
+        #else
+        if (IsStressLevelMax())
+            WallCollapseAnimation();
+        if (!IsStressLevelMax())
+            gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
+        #endif
+        sMiningUiState->shakeState = 0;
+        sMiningUiState->shouldShake = FALSE;
+        sMiningUiState->toggleShakeDuringAnimation = FALSE;
+        DestroyTask(taskId);
+        break;
+    default:
+        sMiningUiState->shakeState++;
+        break;
     }
     BuildOamBuffer();
 }
@@ -1754,40 +1754,40 @@ static void OverwriteTileDataInTilemapBuffer(u8 tile, u8 x, u8 y, u16 *tilemapBu
 static bool32 Mining_LoadBgGraphics(void)
 {
     u16 *tilemapBuf = GetBgTilemapBuffer(1);
-    
+
     switch (sMiningUiState->loadGameState)
     {
-        case 0:
-            ResetTempTileDataBuffers();
-            DecompressAndCopyTileDataToVram(1, sCollapseScreenTiles, 0, 0, 0);
-            DecompressAndCopyTileDataToVram(2, sStressLevelAndTerrainTiles, 0, 0, 0);
-            DecompressAndCopyTileDataToVram(3, sUiTiles, 0, 0, 0);
-            sMiningUiState->loadGameState++;
-            break;
-        case 1:
-            if (FreeTempTileDataBuffersIfPossible() != TRUE)
+    case 0:
+        ResetTempTileDataBuffers();
+        DecompressAndCopyTileDataToVram(1, sCollapseScreenTiles, 0, 0, 0);
+        DecompressAndCopyTileDataToVram(2, sStressLevelAndTerrainTiles, 0, 0, 0);
+        DecompressAndCopyTileDataToVram(3, sUiTiles, 0, 0, 0);
+        sMiningUiState->loadGameState++;
+        break;
+    case 1:
+        if (!FreeTempTileDataBuffersIfPossible())
+        {
+            for (u32 i = 0; i < 32; i++)
             {
-                for (u32 i = 0; i < 32; i++)
-                {
-                    for (u32 j = 0; j < 32; j++)
-                        OverwriteTileDataInTilemapBuffer(0, i, j, tilemapBuf, 2);
-                }
-                DecompressDataWithHeaderWram(sStressLevelAndTerrainTilemap, sMiningUiState->sBg2TilemapBuffer);
-                DecompressDataWithHeaderWram(sUiTilemap, sMiningUiState->sBg3TilemapBuffer);
-                sMiningUiState->loadGameState++;
+                for (u32 j = 0; j < 32; j++)
+                    OverwriteTileDataInTilemapBuffer(0, i, j, tilemapBuf, 2);
             }
-            break;
-        case 2:
-            LoadPalette(sCollapseScreenPalette, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
-            LoadPalette(sStressLevelAndTerrainPalette, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
-            LoadPalette(sUiPalette, BG_PLTT_ID(0), PLTT_SIZE_4BPP);
+            DecompressDataWithHeaderWram(sStressLevelAndTerrainTilemap, sMiningUiState->sBg2TilemapBuffer);
+            DecompressDataWithHeaderWram(sUiTilemap, sMiningUiState->sBg3TilemapBuffer);
             sMiningUiState->loadGameState++;
-        case 3:
-            Mining_DrawRandomTerrain();
-            sMiningUiState->loadGameState++;
-        default:
-            sMiningUiState->loadGameState = STATE_GAME_START;
-            return TRUE;
+        }
+        break;
+    case 2:
+        LoadPalette(sCollapseScreenPalette, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
+        LoadPalette(sStressLevelAndTerrainPalette, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
+        LoadPalette(sUiPalette, BG_PLTT_ID(0), PLTT_SIZE_4BPP);
+        sMiningUiState->loadGameState++;
+    case 3:
+        Mining_DrawRandomTerrain();
+        sMiningUiState->loadGameState++;
+    default:
+        sMiningUiState->loadGameState = STATE_GAME_START;
+        return TRUE;
     }
 
     return FALSE;
@@ -1816,18 +1816,18 @@ static u8 GetRandomItemId()
 
     switch (rarity)
     {
-        case RARITY_COMMON:
-            index = Random() % ARRAY_COUNT(sItemRarityTable_Common);
-            itemId = sItemRarityTable_Common[index];
-            break;
-        case RARITY_UNCOMMON:
-            index = Random() % ARRAY_COUNT(sItemRarityTable_Uncommon);
-            itemId = sItemRarityTable_Uncommon[index];
-            break;
-        case RARITY_RARE:
-            index = Random() % ARRAY_COUNT(sItemRarityTable_Rare);
-            itemId = sItemRarityTable_Rare[index];
-            break;
+    case RARITY_COMMON:
+        index = Random() % ARRAY_COUNT(sItemRarityTable_Common);
+        itemId = sItemRarityTable_Common[index];
+        break;
+    case RARITY_UNCOMMON:
+        index = Random() % ARRAY_COUNT(sItemRarityTable_Uncommon);
+        itemId = sItemRarityTable_Uncommon[index];
+        break;
+    case RARITY_RARE:
+        index = Random() % ARRAY_COUNT(sItemRarityTable_Rare);
+        itemId = sItemRarityTable_Rare[index];
+        break;
     }
 
     return itemId;
@@ -1842,18 +1842,18 @@ static void InitItemsIfSelected(u32 item)
         #if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
         switch(item)
         {
-            case 0:
-                itemId = MINING_DEBUG_MININGID_ITEM1;
-                break;
-            case 1:
-                itemId = MINING_DEBUG_MININGID_ITEM2;
-                break;
-            case 2:
-                itemId = MINING_DEBUG_MININGID_ITEM3;
-                break;
-            case 3:
-                itemId = MINING_DEBUG_MININGID_ITEM4;
-                break;
+        case 0:
+            itemId = MINING_DEBUG_MININGID_ITEM1;
+            break;
+        case 1:
+            itemId = MINING_DEBUG_MININGID_ITEM2;
+            break;
+        case 2:
+            itemId = MINING_DEBUG_MININGID_ITEM3;
+            break;
+        case 3:
+            itemId = MINING_DEBUG_MININGID_ITEM4;
+            break;
         }
         #else
         itemId = GetRandomItemId();
@@ -2138,54 +2138,54 @@ static void StressLevel_UpdateRelativeToFramePos(u32 stressPosOffset, u16 *ptr)
 {
     switch (sMiningUiState->stressLevelCount)
     {
-        case 0:
-            StressLevel_Draw_0(stressPosOffset, ptr);
-            if (sMiningUiState->tool == RED_BUTTON)
-                sMiningUiState->stressLevelCount++;
+    case 0:
+        StressLevel_Draw_0(stressPosOffset, ptr);
+        if (sMiningUiState->tool == RED_BUTTON)
             sMiningUiState->stressLevelCount++;
-            break;
-        case 1:
-            StressLevel_Draw_1(stressPosOffset, ptr);
-            if (sMiningUiState->tool == RED_BUTTON)
-                sMiningUiState->stressLevelCount++;
+        sMiningUiState->stressLevelCount++;
+        break;
+    case 1:
+        StressLevel_Draw_1(stressPosOffset, ptr);
+        if (sMiningUiState->tool == RED_BUTTON)
             sMiningUiState->stressLevelCount++;
-            break;
-        case 2:
-            StressLevel_Draw_2(stressPosOffset, ptr);
-            if (sMiningUiState->tool == RED_BUTTON)
-                sMiningUiState->stressLevelCount++;
+        sMiningUiState->stressLevelCount++;
+        break;
+    case 2:
+        StressLevel_Draw_2(stressPosOffset, ptr);
+        if (sMiningUiState->tool == RED_BUTTON)
             sMiningUiState->stressLevelCount++;
-            break;
-        case 3:
-            StressLevel_Draw_3(stressPosOffset, ptr);
-            if (sMiningUiState->tool == RED_BUTTON)
-                sMiningUiState->stressLevelCount++;
+        sMiningUiState->stressLevelCount++;
+        break;
+    case 3:
+        StressLevel_Draw_3(stressPosOffset, ptr);
+        if (sMiningUiState->tool == RED_BUTTON)
             sMiningUiState->stressLevelCount++;
-            break;
-        case 4:
-            StressLevel_Draw_4(stressPosOffset, ptr);
-            if (sMiningUiState->tool == RED_BUTTON)
-                sMiningUiState->stressLevelCount++;
+        sMiningUiState->stressLevelCount++;
+        break;
+    case 4:
+        StressLevel_Draw_4(stressPosOffset, ptr);
+        if (sMiningUiState->tool == RED_BUTTON)
             sMiningUiState->stressLevelCount++;
-            break;
-        case 5:
-            StressLevel_Draw_5(stressPosOffset, ptr);
-            sMiningUiState->stressLevelCount++;
-            break;
-        case 6:
-            StressLevel_Draw_6(stressPosOffset, ptr);
-            if (sMiningUiState->stressLevelPos == 7)
-            {
-                OverwriteTileDataInTilemapBuffer(0x00, 18 - stressPosOffset * 3, 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, 19 - stressPosOffset * 3, 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, 20 - stressPosOffset * 3, 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, 19 - stressPosOffset * 3, 2, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, 20 - stressPosOffset * 3, 2, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, 20 - stressPosOffset * 3, 3, ptr, 0x01);
-            }
-            sMiningUiState->stressLevelCount = 1;
-            sMiningUiState->stressLevelPos++;
-            break;
+        sMiningUiState->stressLevelCount++;
+        break;
+    case 5:
+        StressLevel_Draw_5(stressPosOffset, ptr);
+        sMiningUiState->stressLevelCount++;
+        break;
+    case 6:
+        StressLevel_Draw_6(stressPosOffset, ptr);
+        if (sMiningUiState->stressLevelPos == 7)
+        {
+            OverwriteTileDataInTilemapBuffer(0x00, 18 - stressPosOffset * 3, 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, 19 - stressPosOffset * 3, 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, 20 - stressPosOffset * 3, 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, 19 - stressPosOffset * 3, 2, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, 20 - stressPosOffset * 3, 2, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, 20 - stressPosOffset * 3, 3, ptr, 0x01);
+        }
+        sMiningUiState->stressLevelCount = 1;
+        sMiningUiState->stressLevelPos++;
+        break;
     }
 }
 
@@ -2204,43 +2204,43 @@ static void Terrain_DrawLayerTileToScreen(u32 x, u32 y, u32 layer, u16 *ptr)
 
     switch(layer)
     {
-        // layer 0 and 1 - tile: 0
-        case 0:
-            OverwriteTileDataInTilemapBuffer(0x20, tileX, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x21, tileX + 1, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x24, tileX, tileY + 1, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x25, tileX + 1, tileY + 1, ptr, 0x01);
-            break;
-        case 1:
-            OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x1E, tileX, tileY + 1, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x1F, tileX + 1, tileY + 1, ptr, 0x01);
-            break;
-        case 2:
-            OverwriteTileDataInTilemapBuffer(0x10, tileX, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x11, tileX + 1, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x15, tileX, tileY + 1, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x16, tileX + 1, tileY + 1, ptr, 0x01);
-            break;
-        case 3:
-            OverwriteTileDataInTilemapBuffer(0x0C, tileX, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x0D, tileX + 1, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x12, tileX, tileY + 1, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x13, tileX + 1, tileY + 1, ptr, 0x01);
-            break;
-        case 4:
-            OverwriteTileDataInTilemapBuffer(0x05, tileX, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x06, tileX + 1, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x0A, tileX, tileY + 1, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x0B, tileX + 1, tileY + 1, ptr, 0x01);
-            break;
-        case 5:
-            OverwriteTileDataInTilemapBuffer(0x01, tileX, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x02, tileX + 1, tileY, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x03, tileX, tileY + 1, ptr, 0x01);
-            OverwriteTileDataInTilemapBuffer(0x04, tileX + 1, tileY + 1, ptr, 0x01);
-            break;
+    // layer 0 and 1 - tile: 0
+    case 0:
+        OverwriteTileDataInTilemapBuffer(0x20, tileX, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x21, tileX + 1, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x24, tileX, tileY + 1, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x25, tileX + 1, tileY + 1, ptr, 0x01);
+        break;
+    case 1:
+        OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x1E, tileX, tileY + 1, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x1F, tileX + 1, tileY + 1, ptr, 0x01);
+        break;
+    case 2:
+        OverwriteTileDataInTilemapBuffer(0x10, tileX, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x11, tileX + 1, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x15, tileX, tileY + 1, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x16, tileX + 1, tileY + 1, ptr, 0x01);
+        break;
+    case 3:
+        OverwriteTileDataInTilemapBuffer(0x0C, tileX, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x0D, tileX + 1, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x12, tileX, tileY + 1, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x13, tileX + 1, tileY + 1, ptr, 0x01);
+        break;
+    case 4:
+        OverwriteTileDataInTilemapBuffer(0x05, tileX, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x06, tileX + 1, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x0A, tileX, tileY + 1, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x0B, tileX + 1, tileY + 1, ptr, 0x01);
+        break;
+    case 5:
+        OverwriteTileDataInTilemapBuffer(0x01, tileX, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x02, tileX + 1, tileY, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x03, tileX, tileY + 1, ptr, 0x01);
+        OverwriteTileDataInTilemapBuffer(0x04, tileX + 1, tileY + 1, ptr, 0x01);
+        break;
     }
 }
 
@@ -2256,7 +2256,7 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
     TempSpriteTemplate.tileTag = TileTag;
     TempSpriteTemplate.paletteTag = PalTag;
     TempSpriteTemplate.oam = &sOamItem64x64;
-    
+
     return TempSpriteTemplate;
 }
 
@@ -2268,61 +2268,61 @@ static void DrawItemSprite(u32 x, u32 y, u32 itemId, u32 itemNumPalTag, u32 item
 
     switch(itemId)
     {
-        case MININGID_STONE_1x4:
-            LoadSpritePalette(sSpritePal_Stone1x4);
-            LoadCompressedSpriteSheet(sSpriteSheet_Stone1x4);
-            CreateSprite(&sSpriteStone1x4, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_4x1:
-            LoadSpritePalette(sSpritePal_Stone4x1);
-            LoadCompressedSpriteSheet(sSpriteSheet_Stone4x1);
-            CreateSprite(&sSpriteStone4x1, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_2x4:
-            LoadSpritePalette(sSpritePal_Stone2x4);
-            LoadCompressedSpriteSheet(sSpriteSheet_Stone2x4);
-            CreateSprite(&sSpriteStone2x4, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_4x2:
-            LoadSpritePalette(sSpritePal_Stone4x2);
-            LoadCompressedSpriteSheet(sSpriteSheet_Stone4x2);
-            CreateSprite(&sSpriteStone4x2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_2x2:
-            LoadSpritePalette(sSpritePal_Stone2x2);
-            LoadCompressedSpriteSheet(sSpriteSheet_Stone2x2);
-            CreateSprite(&sSpriteStone2x2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_3x3:
-            LoadSpritePalette(sSpritePal_Stone3x3);
-            LoadCompressedSpriteSheet(sSpriteSheet_Stone3x3);
-            CreateSprite(&sSpriteStone3x3, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_SNAKE1:
-            LoadSpritePalette(sSpritePal_StoneSnake1);
-            LoadCompressedSpriteSheet(sSpriteSheet_StoneSnake1);
-            CreateSprite(&sSpriteStoneSnake1, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_SNAKE2:
-            LoadSpritePalette(sSpritePal_StoneSnake2);
-            LoadCompressedSpriteSheet(sSpriteSheet_StoneSnake2);
-            CreateSprite(&sSpriteStoneSnake2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_MUSHROOM1:
-            LoadSpritePalette(sSpritePal_StoneMushroom1);
-            LoadCompressedSpriteSheet(sSpriteSheet_StoneMushroom1);
-            CreateSprite(&sSpriteStoneMushroom1, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        case MININGID_STONE_MUSHROOM2:
-            LoadSpritePalette(sSpritePal_StoneMushroom2);
-            LoadCompressedSpriteSheet(sSpriteSheet_StoneMushroom2);
-            CreateSprite(&sSpriteStoneMushroom2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            break;
-        default: // If Item and not Stone
-            gSpriteTemplate = CreatePaletteAndReturnTemplate(sMiningItemList[itemId].tag, itemNumPalTag, itemId);
-            LoadCompressedSpriteSheet(sMiningItemList[itemId].sheet);
-            sMiningUiState->buriedItems[itemStateId].spriteId = CreateSprite(&gSpriteTemplate, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
-            return;
+    case MININGID_STONE_1x4:
+        LoadSpritePalette(sSpritePal_Stone1x4);
+        LoadCompressedSpriteSheet(sSpriteSheet_Stone1x4);
+        CreateSprite(&sSpriteStone1x4, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_4x1:
+        LoadSpritePalette(sSpritePal_Stone4x1);
+        LoadCompressedSpriteSheet(sSpriteSheet_Stone4x1);
+        CreateSprite(&sSpriteStone4x1, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_2x4:
+        LoadSpritePalette(sSpritePal_Stone2x4);
+        LoadCompressedSpriteSheet(sSpriteSheet_Stone2x4);
+        CreateSprite(&sSpriteStone2x4, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_4x2:
+        LoadSpritePalette(sSpritePal_Stone4x2);
+        LoadCompressedSpriteSheet(sSpriteSheet_Stone4x2);
+        CreateSprite(&sSpriteStone4x2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_2x2:
+        LoadSpritePalette(sSpritePal_Stone2x2);
+        LoadCompressedSpriteSheet(sSpriteSheet_Stone2x2);
+        CreateSprite(&sSpriteStone2x2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_3x3:
+        LoadSpritePalette(sSpritePal_Stone3x3);
+        LoadCompressedSpriteSheet(sSpriteSheet_Stone3x3);
+        CreateSprite(&sSpriteStone3x3, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_SNAKE1:
+        LoadSpritePalette(sSpritePal_StoneSnake1);
+        LoadCompressedSpriteSheet(sSpriteSheet_StoneSnake1);
+        CreateSprite(&sSpriteStoneSnake1, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_SNAKE2:
+        LoadSpritePalette(sSpritePal_StoneSnake2);
+        LoadCompressedSpriteSheet(sSpriteSheet_StoneSnake2);
+        CreateSprite(&sSpriteStoneSnake2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_MUSHROOM1:
+        LoadSpritePalette(sSpritePal_StoneMushroom1);
+        LoadCompressedSpriteSheet(sSpriteSheet_StoneMushroom1);
+        CreateSprite(&sSpriteStoneMushroom1, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    case MININGID_STONE_MUSHROOM2:
+        LoadSpritePalette(sSpritePal_StoneMushroom2);
+        LoadCompressedSpriteSheet(sSpriteSheet_StoneMushroom2);
+        CreateSprite(&sSpriteStoneMushroom2, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        break;
+    default: // If Item and not Stone
+        gSpriteTemplate = CreatePaletteAndReturnTemplate(sMiningItemList[itemId].tag, itemNumPalTag, itemId);
+        LoadCompressedSpriteSheet(sMiningItemList[itemId].sheet);
+        sMiningUiState->buriedItems[itemStateId].spriteId = CreateSprite(&gSpriteTemplate, posX + MINING_POS_OFFS_64X64, posY + MINING_POS_OFFS_64X64, 3);
+        return;
     }
 }
 
@@ -2369,35 +2369,35 @@ static void DoDrawRandomItem(u32 itemStateId, u32 itemId)
 
     switch(itemStateId)
     {
-        default:
-        case ITEM_STATE_ID_1:
-            xMin = MINING_ZONE_1_X_LEFT_BOUNDARY;
-            xMax = MINING_ZONE_1_X_RIGHT_BOUNDARY;
-            yMin = MINING_ZONE_1_Y_UP_BOUNDARY;
-            yMax = MINING_ZONE_1_Y_DOWN_BOUNDARY;
-            paletteTag = TAG_PAL_ITEM1;
-            break;
-        case ITEM_STATE_ID_2:
-            xMin = MINING_ZONE_2_X_LEFT_BOUNDARY;
-            xMax = MINING_ZONE_2_X_RIGHT_BOUNDARY;
-            yMin = MINING_ZONE_2_Y_UP_BOUNDARY;
-            yMax = MINING_ZONE_2_Y_DOWN_BOUNDARY;
-            paletteTag = TAG_PAL_ITEM2;
-            break;
-        case ITEM_STATE_ID_3:
-            xMin = MINING_ZONE_3_X_LEFT_BOUNDARY;
-            xMax = MINING_ZONE_3_X_RIGHT_BOUNDARY;
-            yMin = MINING_ZONE_3_Y_UP_BOUNDARY;
-            yMax = MINING_ZONE_3_Y_DOWN_BOUNDARY;
-            paletteTag = TAG_PAL_ITEM3;
-            break;
-        case ITEM_STATE_ID_4:
-            xMin = MINING_ZONE_4_X_LEFT_BOUNDARY;
-            xMax = MINING_ZONE_4_X_RIGHT_BOUNDARY;
-            yMin = MINING_ZONE_4_Y_UP_BOUNDARY;
-            yMax = MINING_ZONE_4_Y_DOWN_BOUNDARY;
-            paletteTag = TAG_PAL_ITEM4;
-            break;
+    default:
+    case ITEM_STATE_ID_1:
+        xMin = MINING_ZONE_1_X_LEFT_BOUNDARY;
+        xMax = MINING_ZONE_1_X_RIGHT_BOUNDARY;
+        yMin = MINING_ZONE_1_Y_UP_BOUNDARY;
+        yMax = MINING_ZONE_1_Y_DOWN_BOUNDARY;
+        paletteTag = TAG_PAL_ITEM1;
+        break;
+    case ITEM_STATE_ID_2:
+        xMin = MINING_ZONE_2_X_LEFT_BOUNDARY;
+        xMax = MINING_ZONE_2_X_RIGHT_BOUNDARY;
+        yMin = MINING_ZONE_2_Y_UP_BOUNDARY;
+        yMax = MINING_ZONE_2_Y_DOWN_BOUNDARY;
+        paletteTag = TAG_PAL_ITEM2;
+        break;
+    case ITEM_STATE_ID_3:
+        xMin = MINING_ZONE_3_X_LEFT_BOUNDARY;
+        xMax = MINING_ZONE_3_X_RIGHT_BOUNDARY;
+        yMin = MINING_ZONE_3_Y_UP_BOUNDARY;
+        yMax = MINING_ZONE_3_Y_DOWN_BOUNDARY;
+        paletteTag = TAG_PAL_ITEM3;
+        break;
+    case ITEM_STATE_ID_4:
+        xMin = MINING_ZONE_4_X_LEFT_BOUNDARY;
+        xMax = MINING_ZONE_4_X_RIGHT_BOUNDARY;
+        yMin = MINING_ZONE_4_Y_UP_BOUNDARY;
+        yMax = MINING_ZONE_4_Y_DOWN_BOUNDARY;
+        paletteTag = TAG_PAL_ITEM4;
+        break;
     }
 
     for (y = yMin; y <= yMax; y++)
@@ -2632,42 +2632,42 @@ static void Terrain_UpdateLayerTileOnScreen(u16 *ptr, s32 ofsX, s32 ofsY)
 
         switch (sMiningUiState->layerMap[i]) // Each case represents one layer on the wall
         {
-            case 1:
-                OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x1E, tileX, tileY + 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x1F, tileX + 1, tileY + 1, ptr, 0x01);
-                break;
-            case 2:
-                OverwriteTileDataInTilemapBuffer(0x10, tileX, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x11, tileX + 1, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x15, tileX, tileY + 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x16, tileX + 1, tileY + 1, ptr, 0x01);
-                break;
-            case 3:
-                OverwriteTileDataInTilemapBuffer(0x0C, tileX, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x0D, tileX + 1, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x12, tileX, tileY + 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x13, tileX + 1, tileY + 1, ptr, 0x01);
-                break;
-            case 4:
-                OverwriteTileDataInTilemapBuffer(0x05, tileX, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x06, tileX + 1, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x0A, tileX, tileY + 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x0B, tileX + 1, tileY + 1, ptr, 0x01);
-                break;
-            case 5:
-                OverwriteTileDataInTilemapBuffer(0x01, tileX, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x02, tileX + 1, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x03, tileX, tileY + 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x04, tileX + 1, tileY + 1, ptr, 0x01);
-                break;
-            case 6:
-                OverwriteTileDataInTilemapBuffer(0x00, tileX, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, tileX + 1, tileY, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, tileX, tileY + 1, ptr, 0x01);
-                OverwriteTileDataInTilemapBuffer(0x00, tileX + 1, tileY + 1, ptr, 0x01);
-                break;
+        case 1:
+            OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x1E, tileX, tileY + 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x1F, tileX + 1, tileY + 1, ptr, 0x01);
+            break;
+        case 2:
+            OverwriteTileDataInTilemapBuffer(0x10, tileX, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x11, tileX + 1, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x15, tileX, tileY + 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x16, tileX + 1, tileY + 1, ptr, 0x01);
+            break;
+        case 3:
+            OverwriteTileDataInTilemapBuffer(0x0C, tileX, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x0D, tileX + 1, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x12, tileX, tileY + 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x13, tileX + 1, tileY + 1, ptr, 0x01);
+            break;
+        case 4:
+            OverwriteTileDataInTilemapBuffer(0x05, tileX, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x06, tileX + 1, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x0A, tileX, tileY + 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x0B, tileX + 1, tileY + 1, ptr, 0x01);
+            break;
+        case 5:
+            OverwriteTileDataInTilemapBuffer(0x01, tileX, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x02, tileX + 1, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x03, tileX, tileY + 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x04, tileX + 1, tileY + 1, ptr, 0x01);
+            break;
+        case 6:
+            OverwriteTileDataInTilemapBuffer(0x00, tileX, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, tileX + 1, tileY, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, tileX, tileY + 1, ptr, 0x01);
+            OverwriteTileDataInTilemapBuffer(0x00, tileX + 1, tileY + 1, ptr, 0x01);
+            break;
         }
     }
 }
@@ -2735,12 +2735,12 @@ static void Mining_UpdateTerrain(void)
 
     switch (sMiningUiState->tool)
     {
-        case RED_BUTTON:
-            Terrain_Hammer_OverwriteTiles(ptr);
-            break;
-        case BLUE_BUTTON:
-            Terrain_Pickaxe_OverwriteTiles(ptr);
-            break;
+    case RED_BUTTON:
+        Terrain_Hammer_OverwriteTiles(ptr);
+        break;
+    case BLUE_BUTTON:
+        Terrain_Pickaxe_OverwriteTiles(ptr);
+        break;
     }
 }
 
@@ -2826,19 +2826,19 @@ static bool32 ClearWindowPlaySelectButtonPress(void)
         
         switch (sMiningUiState->loadGameState)
         {
-            case STATE_GAME_FINISH:
-            case STATE_ITEM_NAME_1:
-            case STATE_ITEM_BAG_1:
-            case STATE_ITEM_NAME_2:
-            case STATE_ITEM_BAG_2:
-            case STATE_ITEM_NAME_3:
-            case STATE_ITEM_BAG_3:
-            case STATE_ITEM_NAME_4:
-            case STATE_ITEM_BAG_4:
-                break;
-            default:
-                ClearDialogWindowAndFrame(WIN_MSG, TRUE);
-                break;
+        case STATE_GAME_FINISH:
+        case STATE_ITEM_NAME_1:
+        case STATE_ITEM_BAG_1:
+        case STATE_ITEM_NAME_2:
+        case STATE_ITEM_BAG_2:
+        case STATE_ITEM_NAME_3:
+        case STATE_ITEM_BAG_3:
+        case STATE_ITEM_NAME_4:
+        case STATE_ITEM_BAG_4:
+            break;
+        default:
+            ClearDialogWindowAndFrame(WIN_MSG, TRUE);
+            break;
         }
 
         return TRUE;
@@ -2856,23 +2856,23 @@ static void Task_WaitButtonPressOpening(u8 taskId)
 
         switch (sMiningUiState->loadGameState)
         {
-            case STATE_GAME_FINISH:
-            case STATE_ITEM_NAME_1:
-            case STATE_ITEM_BAG_1:
-            case STATE_ITEM_NAME_2:
-            case STATE_ITEM_BAG_2:
-            case STATE_ITEM_NAME_3:
-            case STATE_ITEM_BAG_3:
-            case STATE_ITEM_NAME_4:
-            case STATE_ITEM_BAG_4:
-                gTasks[taskId].func = Task_MiningPrintResult;
-                break;
-            case STATE_QUIT:
-                ExitMiningUI(taskId);
-                break;
-            default:
-                gTasks[taskId].func = Task_MiningMainInput;
-                break;
+        case STATE_GAME_FINISH:
+        case STATE_ITEM_NAME_1:
+        case STATE_ITEM_BAG_1:
+        case STATE_ITEM_NAME_2:
+        case STATE_ITEM_BAG_2:
+        case STATE_ITEM_NAME_3:
+        case STATE_ITEM_BAG_3:
+        case STATE_ITEM_NAME_4:
+        case STATE_ITEM_BAG_4:
+            gTasks[taskId].func = Task_MiningPrintResult;
+            break;
+        case STATE_QUIT:
+            ExitMiningUI(taskId);
+            break;
+        default:
+            gTasks[taskId].func = Task_MiningMainInput;
+            break;
         }
     }
     else if (JOY_NEW(A_BUTTON))
@@ -2895,27 +2895,27 @@ static void Task_MiningPrintResult(u8 taskId)
 
     switch (sMiningUiState->loadGameState)
     {
-        case STATE_GAME_START:
-            gTasks[taskId].func = Task_MiningMainInput;
-            break;
-        case STATE_GAME_FINISH:
-            HandleGameFinish(taskId);
-            break;
-        case STATE_ITEM_NAME_1:
-        case STATE_ITEM_NAME_2:
-        case STATE_ITEM_NAME_3:
-        case STATE_ITEM_NAME_4:
-            CheckItemAndPrint(taskId,itemIndex,itemId);
-            break;
-        case STATE_ITEM_BAG_1:
-        case STATE_ITEM_BAG_2:
-        case STATE_ITEM_BAG_3:
-        case STATE_ITEM_BAG_4:
-            GetItemOrPrintError(taskId,itemIndex,itemId);
-            break;
-        default:
-            ExitMiningUI(taskId);
-            break;
+    case STATE_GAME_START:
+        gTasks[taskId].func = Task_MiningMainInput;
+        break;
+    case STATE_GAME_FINISH:
+        HandleGameFinish(taskId);
+        break;
+    case STATE_ITEM_NAME_1:
+    case STATE_ITEM_NAME_2:
+    case STATE_ITEM_NAME_3:
+    case STATE_ITEM_NAME_4:
+        CheckItemAndPrint(taskId, itemIndex, itemId);
+        break;
+    case STATE_ITEM_BAG_1:
+    case STATE_ITEM_BAG_2:
+    case STATE_ITEM_BAG_3:
+    case STATE_ITEM_BAG_4:
+        GetItemOrPrintError(taskId, itemIndex, itemId);
+        break;
+    default:
+        ExitMiningUI(taskId);
+        break;
     }
 }
 
@@ -2923,19 +2923,19 @@ static u32 ConvertLoadGameStateToItemIndex(void)
 {
     switch (sMiningUiState->loadGameState)
     {
-        default:
-        case STATE_ITEM_NAME_1:
-        case STATE_ITEM_BAG_1:
-            return 0;
-        case STATE_ITEM_NAME_2:
-        case STATE_ITEM_BAG_2:
-            return 1;
-        case STATE_ITEM_NAME_3:
-        case STATE_ITEM_BAG_3:
-            return 2;
-        case STATE_ITEM_NAME_4:
-        case STATE_ITEM_BAG_4:
-            return 3;
+    default:
+    case STATE_ITEM_NAME_1:
+    case STATE_ITEM_BAG_1:
+        return 0;
+    case STATE_ITEM_NAME_2:
+    case STATE_ITEM_BAG_2:
+        return 1;
+    case STATE_ITEM_NAME_3:
+    case STATE_ITEM_BAG_3:
+        return 2;
+    case STATE_ITEM_NAME_4:
+    case STATE_ITEM_BAG_4:
+        return 3;
     }
 }
 
@@ -2979,42 +2979,42 @@ static void Task_WallCollapseDelay(u8 taskId)
 
     switch(sMiningUiState->delayCounter)
     {
-        default:
-            sMiningUiState->delayCounter++;
-            break;
-        case 0:
-        case 2:
-        case 4:
-        case 6:
-        case 8:
-        case 10:
-        case 12:
-        case 14:
-        case 16:
-        case 18:
-        case 20:
-        case 22:
-        case 24:
-        case 26:
-        case 28:
-        case 30:
-        case 32:
-        case 34:
-        case 36:
-        case 38:
-            for (u32 j = 0; j < 30; j++)
-            {
-                OverwriteTileDataInTilemapBuffer(1, j, (sMiningUiState->delayCounter / 2), tilemapBuf, 2);
-                ScheduleBgCopyTilemapToVram(1);
-                DoScheduledBgTilemapCopiesToVram();
-            }
-            sMiningUiState->delayCounter++;
-            break;
-        case 40:
-            DestroyTask(taskId);
-            sMiningUiState->isCollapseAnimActive = FALSE;
-            PrintMessage(COMPOUND_STRING("The wall collapsed!"));
-            break;
+    default:
+        sMiningUiState->delayCounter++;
+        break;
+    case 0:
+    case 2:
+    case 4:
+    case 6:
+    case 8:
+    case 10:
+    case 12:
+    case 14:
+    case 16:
+    case 18:
+    case 20:
+    case 22:
+    case 24:
+    case 26:
+    case 28:
+    case 30:
+    case 32:
+    case 34:
+    case 36:
+    case 38:
+        for (u32 j = 0; j < 30; j++)
+        {
+            OverwriteTileDataInTilemapBuffer(1, j, sMiningUiState->delayCounter / 2, tilemapBuf, 2);
+            ScheduleBgCopyTilemapToVram(1);
+            DoScheduledBgTilemapCopiesToVram();
+        }
+        sMiningUiState->delayCounter++;
+        break;
+    case 40:
+        DestroyTask(taskId);
+        sMiningUiState->isCollapseAnimActive = FALSE;
+        PrintMessage(COMPOUND_STRING("The wall collapsed!"));
+        break;
     }
 }
 #endif
