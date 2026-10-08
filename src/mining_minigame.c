@@ -106,8 +106,8 @@ struct MiningState
 {
     MainCallback leavingCallback;   // Callback to leave the Ui
     u32 loadGameState;
-    u32 layerMap[MINING_ZONE_SIZE];             // Array representing the screen. Determines virtual layers
-    u32 itemMap[MINING_ZONE_SIZE];              // Determines where items are on the screen
+    u32 layerMap[MINING_WALL_SIZE];             // Array representing the screen. Determines virtual layers
+    u32 itemMap[MINING_WALL_SIZE];              // Determines where items are on the screen
     u32 cursorX;
     u32 cursorY;
 
@@ -478,7 +478,7 @@ static const union AnimCmd sAnimCmdButton_BlueNotPressed[] =
 
 static const union AnimCmd sAnimCmdButton_BluePressed[] =
 {
-    ANIMCMD_FRAME(MINING_ZONE_SIZE, 30),
+    ANIMCMD_FRAME(MINING_WALL_SIZE, 30),
     ANIMCMD_JUMP(0),
 };
 
@@ -1795,7 +1795,7 @@ static bool32 Mining_LoadBgGraphics(void)
 
 static void ClearItemMap(void)
 {
-    for (u32 i = 0; i < MINING_ZONE_SIZE; i++)
+    for (u32 i = 0; i < MINING_WALL_SIZE; i++)
         sMiningUiState->itemMap[i] = MINING_ITEM_TILE_NONE;
 }
 
@@ -2428,17 +2428,17 @@ static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId) // PSF magic
     u32 height = MiningUtil_GetTopValue(itemId) + 1;
     u32 width =  MiningUtil_GetLeftValue(itemId) + 1;
 
-    if ((x + width) > MINING_ZONE_WIDTH)
+    if ((x + width) > MINING_WALL_WIDTH)
         return FALSE;
 
-    if ((y + height) > MINING_ZONE_HEIGHT)
+    if ((y + height) > MINING_WALL_HEIGHT)
         return FALSE;
 
     for (u32 dx = 0; dx < width; dx++)
     {
         for (u32 dy = 0; dy < height; dy++)
         {
-            if (sMiningUiState->itemMap[x + dx + (y + dy) * MINING_ZONE_WIDTH] != 0)
+            if (sMiningUiState->itemMap[x + dx + (y + dy) * MINING_WALL_WIDTH] != 0)
                 return FALSE;
         }
     }
@@ -2453,9 +2453,9 @@ static bool32 DoesStoneFitInItemMap(u32 itemId)
     if (itemId == MININGID_NONE)
         return FALSE;
 
-    for (u32 coordX = 0; coordX < MINING_ZONE_WIDTH; coordX++)
+    for (u32 coordX = 0; coordX < MINING_WALL_WIDTH; coordX++)
     {
-        for (u32 coordY = 0; coordY < MINING_ZONE_HEIGHT; coordY++)
+        for (u32 coordY = 0; coordY < MINING_WALL_HEIGHT; coordY++)
         {
             if (CanStoneBePlacedAtXY(coordX, coordY, itemId))
                 return TRUE;
@@ -2468,13 +2468,13 @@ static bool32 DoesStoneFitInItemMap(u32 itemId)
 
 static void DoDrawRandomStone(u32 itemId)
 {
-    u32 x = Random() % MINING_ZONE_WIDTH;
-    u32 y = Random() % MINING_ZONE_HEIGHT;
+    u32 x = Random() % MINING_WALL_WIDTH;
+    u32 y = Random() % MINING_WALL_HEIGHT;
 
     while(!CanStoneBePlacedAtXY(x, y, itemId))
     {
-        x = Random() % MINING_ZONE_WIDTH;
-        y = Random() % MINING_ZONE_HEIGHT;
+        x = Random() % MINING_WALL_WIDTH;
+        y = Random() % MINING_WALL_HEIGHT;
     }
 
     DrawItemSprite(x, y, itemId, TAG_DUMMY, ITEM_STATE_ID_NONE); // We use ITEM_STATE_ID_NONE becasue here, a stone is guaranteed
@@ -2488,7 +2488,7 @@ static void HandleItemState(u32 itemId)
 
     if (sMiningUiState->buriedItems[itemId].buriedState < full && sMiningUiState->buriedItems[itemId].isSelected)
     {
-        for (u32 i = 0; i < MINING_ZONE_SIZE; i++)
+        for (u32 i = 0; i < MINING_WALL_SIZE; i++)
         {
             if (sMiningUiState->itemMap[i] == itemId + 1 && sMiningUiState->layerMap[i] == 6)
             {
@@ -2513,7 +2513,7 @@ static void Mining_CheckItemFound(void)
     HandleItemState(2);
     HandleItemState(3);
 
-    for (u32 i = 0; i < MINING_ZONE_SIZE; i++)
+    for (u32 i = 0; i < MINING_WALL_SIZE; i++)
     {
         if (sMiningUiState->itemMap[i] == 6 && sMiningUiState->layerMap[i] == 6)
             sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
@@ -2550,7 +2550,7 @@ static void Mining_DrawRandomTerrain(void)
     u16 *ptr = GetBgTilemapBuffer(2);
 
     // Start by placing blank layer 3 rocks
-    for (i = 0; i < MINING_ZONE_SIZE; ++i)
+    for (i = 0; i < MINING_WALL_SIZE; ++i)
         sMiningUiState->layerMap[i] = 2;
 
     // Create patches of lighter dirt areas
@@ -2559,14 +2559,14 @@ static void Mining_DrawRandomTerrain(void)
     {
         do
         {
-            row1 = Random() % (MINING_ZONE_HEIGHT + 1);
-            row2 = Random() % (MINING_ZONE_HEIGHT + 1);
+            row1 = Random() % (MINING_WALL_HEIGHT + 1);
+            row2 = Random() % (MINING_WALL_HEIGHT + 1);
         } while (row1 >= row2);
 
         do
         {
-            col1 = Random() % (MINING_ZONE_WIDTH + 1);
-            col2 = Random() % (MINING_ZONE_WIDTH + 1);
+            col1 = Random() % (MINING_WALL_WIDTH + 1);
+            col2 = Random() % (MINING_WALL_WIDTH + 1);
         } while (col1 >= col2);
 
         for (; row1 < row2; ++row1)
@@ -2587,19 +2587,19 @@ static void Mining_DrawRandomTerrain(void)
     totalTimes = Random() % 5 + 2;
     for (i = 0; i < totalTimes; ++i)
     {
-        baseRow = RandRangeSigned(-4,  MINING_ZONE_HEIGHT);  // Rocks can go up to one row over on either top or bottom
-        baseCol = RandRangeSigned(-4, MINING_ZONE_WIDTH); // Rocks can go up to one col over on either left or right
+        baseRow = RandRangeSigned(-4,  MINING_WALL_HEIGHT);  // Rocks can go up to one row over on either top or bottom
+        baseCol = RandRangeSigned(-4, MINING_WALL_WIDTH); // Rocks can go up to one col over on either left or right
         finalRow = baseRow + 5;
         finalCol = baseCol + 5;
 
         for (k = baseRow; k < finalRow; ++k)
         {
-            if (k < 0 || k >= MINING_ZONE_HEIGHT)
+            if (k < 0 || k >= MINING_WALL_HEIGHT)
                 continue; // Not legal row
 
             for (m = baseCol; m < finalCol; ++m)
             {
-                if (m < 0 || m >= MINING_ZONE_WIDTH)
+                if (m < 0 || m >= MINING_WALL_WIDTH)
                     continue; // Not legal column
 
                 if (AtCornerOfRectangle(k, m, baseRow, baseCol, baseRow + 4, baseCol + 4))
@@ -2614,9 +2614,9 @@ static void Mining_DrawRandomTerrain(void)
 
     // Using 'x', 'y' and 'i' to draw the right layer_tiles from layerMap to the screen.
     // Why 'y = 2'? Because we need to have a distance from the top of the screen, which is 32px -> 2 * 16
-    for (y = 2; y < MINING_ZONE_HEIGHT + 2; y++)
+    for (y = 2; y < MINING_WALL_HEIGHT + 2; y++)
     {
-        for (x = 0; x < MINING_ZONE_WIDTH && i < MINING_ZONE_SIZE; x++, i++)
+        for (x = 0; x < MINING_WALL_WIDTH && i < MINING_WALL_SIZE; x++, i++)
             Terrain_DrawLayerTileToScreen(x, y, sMiningUiState->layerMap[i], ptr);
     }
 }
