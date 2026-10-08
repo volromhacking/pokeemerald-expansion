@@ -1800,11 +1800,9 @@ static void ClearItemMap(void)
 }
 
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == FALSE
-static u8 GetRandomItemId()
+static u32 GetRandomItemId()
 {
-    u32 rarity;
-    u32 index;
-    u32 itemId;
+    u32 rarity, index, itemId;
     u32 rnd = Random() % 7;
 
     if (rnd < 4)
@@ -1923,7 +1921,7 @@ static void Task_MiningMainInput(u8 taskId)
 {
     if (gMain.newKeys & A_BUTTON && !sMiningUiState->shouldShake)
     {
-        u32 cursorPos = sMiningUiState->cursorX + (sMiningUiState->cursorY - 2) * 12;
+        u32 cursorPos = sMiningUiState->cursorX + (sMiningUiState->cursorY - 2) * MINING_WALL_WIDTH;
         Mining_UpdateTerrain();
         Mining_UpdateStressLevel();
         ScheduleBgCopyTilemapToVram(2);
@@ -2977,44 +2975,24 @@ static void Task_WallCollapseDelay(u8 taskId)
 {
     u16 *tilemapBuf = GetBgTilemapBuffer(1);
 
-    switch(sMiningUiState->delayCounter)
+    if (sMiningUiState->delayCounter >= 40)
     {
-    default:
-        sMiningUiState->delayCounter++;
-        break;
-    case 0:
-    case 2:
-    case 4:
-    case 6:
-    case 8:
-    case 10:
-    case 12:
-    case 14:
-    case 16:
-    case 18:
-    case 20:
-    case 22:
-    case 24:
-    case 26:
-    case 28:
-    case 30:
-    case 32:
-    case 34:
-    case 36:
-    case 38:
-        for (u32 j = 0; j < 30; j++)
-        {
-            OverwriteTileDataInTilemapBuffer(1, j, sMiningUiState->delayCounter / 2, tilemapBuf, 2);
-            ScheduleBgCopyTilemapToVram(1);
-            DoScheduledBgTilemapCopiesToVram();
-        }
-        sMiningUiState->delayCounter++;
-        break;
-    case 40:
         DestroyTask(taskId);
         sMiningUiState->isCollapseAnimActive = FALSE;
         PrintMessage(COMPOUND_STRING("The wall collapsed!"));
-        break;
+    }
+    else
+    {
+        if (sMiningUiState->delayCounter % 2 == 0)
+        {
+            for (u32 j = 0; j < 30; j++)
+            {
+                OverwriteTileDataInTilemapBuffer(1, j, sMiningUiState->delayCounter / 2, tilemapBuf, 2);
+                ScheduleBgCopyTilemapToVram(1);
+                DoScheduledBgTilemapCopiesToVram();
+            }
+        }
+        sMiningUiState->delayCounter++;
     }
 }
 #endif
