@@ -1401,8 +1401,6 @@ static u32 MiningUtil_GetTopValue(u32 itemId)
     return top - 1;
 }
 
-#define RANDOM(a) (Random() % (a))
-
 void StartMining(void)
 {
     Mining_Init(CB2_ReturnToField);
@@ -1452,7 +1450,7 @@ static void Mining_Init(MainCallback callback)
         sMiningUiState->buriedItems[i].isSelected = TRUE;
 
 #else
-    u32 amountItemsToSelect = RANDOM(3) + 2; // The `+ 2` says that the min. amount of items to be generated are 2.
+    u32 amountItemsToSelect = Random() % 3 + 2; // The `+ 2` says that the min. amount of items to be generated are 2.
 
     // Fisher-Yates shuffle implementation
     u32 n = 4;
@@ -1462,7 +1460,7 @@ static void Mining_Init(MainCallback callback)
     for (u32 i = n - 1; i > 0; i--)
     {
         // Pick a random index from 0 to i (inclusive)
-        u32 j = RANDOM(i + 1);
+        u32 j = Random() % (i + 1);
         // Swap the current element with the element at random index
         u32 temp = zones[i];
         zones[i] = zones[j];
@@ -1807,7 +1805,7 @@ static u8 GetRandomItemId()
     u32 rarity;
     u32 index;
     u32 itemId;
-    u32 rnd = RANDOM(7);
+    u32 rnd = Random() % 7;
 
     if (rnd < 4)
         rarity = RARITY_COMMON;
@@ -1819,15 +1817,15 @@ static u8 GetRandomItemId()
     switch (rarity)
     {
         case RARITY_COMMON:
-            index = RANDOM(ARRAY_COUNT(sItemRarityTable_Common));
+            index = Random() % ARRAY_COUNT(sItemRarityTable_Common);
             itemId = sItemRarityTable_Common[index];
             break;
         case RARITY_UNCOMMON:
-            index = RANDOM(ARRAY_COUNT(sItemRarityTable_Uncommon));
+            index = Random() % ARRAY_COUNT(sItemRarityTable_Uncommon);
             itemId = sItemRarityTable_Uncommon[index];
             break;
         case RARITY_RARE:
-            index = RANDOM(ARRAY_COUNT(sItemRarityTable_Rare));
+            index = Random() % ARRAY_COUNT(sItemRarityTable_Rare);
             itemId = sItemRarityTable_Rare[index];
             break;
     }
@@ -2556,19 +2554,19 @@ static void Mining_DrawRandomTerrain(void)
         sMiningUiState->layerMap[i] = 2;
 
     // Create patches of lighter dirt areas
-    totalTimes = 3 + RANDOM(5);
+    totalTimes = 3 + Random() % 5;
     for (i = 0; i < totalTimes; ++i)
     {
         do
         {
-            row1 = RANDOM(MINING_ZONE_HEIGHT + 1);
-            row2 = RANDOM(MINING_ZONE_HEIGHT + 1);
+            row1 = Random() % (MINING_ZONE_HEIGHT + 1);
+            row2 = Random() % (MINING_ZONE_HEIGHT + 1);
         } while (row1 >= row2);
 
         do
         {
-            col1 = RANDOM(MINING_ZONE_WIDTH + 1);
-            col2 = RANDOM(MINING_ZONE_WIDTH + 1);
+            col1 = Random() % (MINING_ZONE_WIDTH + 1);
+            col2 = Random() % (MINING_ZONE_WIDTH + 1);
         } while (col1 >= col2);
 
         for (; row1 < row2; ++row1)
@@ -2586,7 +2584,7 @@ static void Mining_DrawRandomTerrain(void)
       0 0 0 0 0
         0 0 0
     */
-    totalTimes = RANDOM(5) + 2;
+    totalTimes = Random() % 5 + 2;
     for (i = 0; i < totalTimes; ++i)
     {
         baseRow = RandRangeSigned(-4,  MINING_ZONE_HEIGHT);  // Rocks can go up to one row over on either top or bottom
