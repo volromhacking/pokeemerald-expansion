@@ -1359,7 +1359,7 @@ static u32 MiningUtil_GetTotalTileAmount(u32 itemId)
     }
     if (result == 0)
         return result+1;
-    
+
     return result;
 }
 
