@@ -61,7 +61,7 @@ enum
 /*********** FLAGS ************/
 #define MINING_FLAG_USE_DEFAULT_MESSAGE_BOX         FALSE
 
-enum
+enum MiningId
 {
     MININGID_NONE,
     MININGID_STONE_1x4,

@@ -61,12 +61,12 @@ static void Mining_FreeResources(void);
 static void Mining_UpdateStressLevel(void);
 static void Mining_UpdateTerrain(void);
 static void Mining_DrawRandomTerrain(void);
-static void DoDrawRandomItem(u32 itemStateId, u32 itemId);
-static void DoDrawRandomStone(u32 itemId);
+static void DoDrawRandomItem(u32 itemStateId, enum MiningId itemId);
+static void DoDrawRandomStone(enum MiningId itemId);
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_ENABLE_STONE_GENERATION_OPTIONS == FALSE
-static bool32 DoesStoneFitInItemMap(u32 itemId);
+static bool32 DoesStoneFitInItemMap(enum MiningId itemId);
 #endif
-static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId);
+static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, enum MiningId itemId);
 static void Mining_CheckItemFound(void);
 static void PrintMessage(const u8 *string);
 static void InitMiningWindows(void);
@@ -78,24 +78,24 @@ static u32 GetNumberOfFoundItems(void);
 static void WallCollapseAnimation();
 #endif
 static u32 ConvertLoadGameStateToItemIndex(void);
-static void GetItemOrPrintError(u8 taskId, u32 itemIndex, u32 itemId);
-static void CheckItemAndPrint(u8 taskId, u32 itemIndex, u32 itemId);
+static void GetItemOrPrintError(u8 taskId, u32 itemIndex, enum Item itemId);
+static void CheckItemAndPrint(u8 taskId, u32 itemIndex, enum Item itemId);
 static void MakeCursorInvisible(void);
 static void HandleGameFinish(u8 taskId);
-static void PrintItemSuccess(u32 buriedItemsIndex);
+static void PrintItemSuccess(enum Item itemId);
 static u32 GetTotalNumberOfBuriedItems(void);
 static void InitBuriedItems(void);
-static void SetBuriedItemsId(u32 index, u32 itemId);
+static void SetBuriedItemsId(u32 index, enum MiningId itemId);
 static void SetBuriedItemStatus(u32 index, bool32 status);
-static u32 GetBuriedBagItemId(u32 index);
-static u32 GetBuriedMiningItemId(u32 index);
+static enum Item GetBuriedBagItemId(u32 index);
+static enum MiningId GetBuriedMiningItemId(u32 index);
 static bool32 GetBuriedItemStatus(u32 index);
 static void ExitMiningUI(u8 taskId);
 
 struct BuriedItem
 {
-    u32 bagItemId;
-    u32 miningItemId;
+    enum Item bagItemId;
+    enum MiningId miningItemId;
     bool32 isDugUp;
     bool32 isSelected;
     u32 buriedState;
@@ -1111,7 +1111,7 @@ static const struct SpriteTemplate sSpriteStoneMushroom2 =
 
 struct MiningItem
 {
-    u32 bagItemId;
+    enum Item bagItemId;
     u32 tag;
     const struct CompressedSpriteSheet *sheet;
     const u16 *paldata;
@@ -1121,7 +1121,7 @@ static const struct MiningItem sMiningItemList[] =
 {
     [MININGID_NONE] =
     {
-        .bagItemId = 0,
+        .bagItemId = ITEM_NONE,
         .tag = 0,
         .sheet = NULL,
         .paldata = NULL,
@@ -1310,7 +1310,7 @@ static const struct MiningItem sMiningItemList[] =
     },
 };
 
-static const u32 sItemRarityTable_Common[] =
+static const enum MiningId sItemRarityTable_Common[] =
 {
     MININGID_HEART_SCALE,
     MININGID_RED_SHARD,
@@ -1319,7 +1319,7 @@ static const u32 sItemRarityTable_Common[] =
     MININGID_GREEN_SHARD,
 };
 
-static const u32 sItemRarityTable_Uncommon[] =
+static const enum MiningId sItemRarityTable_Uncommon[] =
 {
     MININGID_IRON_BALL,
     MININGID_HARD_STONE,
@@ -1327,7 +1327,7 @@ static const u32 sItemRarityTable_Uncommon[] =
     MININGID_EVER_STONE,
 };
 
-static const u32 sItemRarityTable_Rare[] =
+static const enum MiningId sItemRarityTable_Rare[] =
 {
     MININGID_STAR_PIECE,
     MININGID_DAMP_ROCK,
@@ -1348,7 +1348,7 @@ static const u32 sItemRarityTable_Rare[] =
     MININGID_ARMOR_FOSSIL,
 };
 
-static u32 MiningUtil_GetTotalTileAmount(u32 itemId)
+static u32 MiningUtil_GetTotalTileAmount(enum MiningId itemId)
 {
     u32 result = 0;
 
@@ -1363,7 +1363,7 @@ static u32 MiningUtil_GetTotalTileAmount(u32 itemId)
     return result;
 }
 
-static u32 MiningUtil_GetLeftValue(u32 itemId)
+static u32 MiningUtil_GetLeftValue(enum MiningId itemId)
 {
     u32 left = 0;
 
@@ -1382,7 +1382,7 @@ static u32 MiningUtil_GetLeftValue(u32 itemId)
     return left - 1;
 }
 
-static u32 MiningUtil_GetTopValue(u32 itemId)
+static u32 MiningUtil_GetTopValue(enum MiningId itemId)
 {
     u32 top = 0;
 
@@ -1800,9 +1800,10 @@ static void ClearItemMap(void)
 }
 
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == FALSE
-static u32 GetRandomItemId()
+static enum MiningId GetRandomItemId()
 {
-    u32 rarity, index, itemId;
+    u32 rarity, index;
+    enum MiningId itemId = MININGID_NONE;
     u32 rnd = Random() % 7;
 
     if (rnd < 4)
@@ -1834,7 +1835,7 @@ static u32 GetRandomItemId()
 
 static void InitItemsIfSelected(u32 item)
 {
-    u32 itemId = 0;
+    enum MiningId itemId = MININGID_NONE;
     if (sMiningUiState->buriedItems[item].isSelected)
     {
         #if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
@@ -1882,7 +1883,7 @@ static void Mining_LoadSpriteGraphics(void)
     DoDrawRandomStone(MINING_DEBUG_MININGID_STONE1);
     DoDrawRandomStone(MINING_DEBUG_MININGID_STONE2);
     #else
-    u32 stone = MININGID_NONE;
+    enum MiningId stone = MININGID_NONE;
     for (u32 i = 0; i < MINING_MAX_NUM_BURIED_STONES; i++)
     {
         stone = MININGID_NONE;
@@ -2242,7 +2243,7 @@ static void Terrain_DrawLayerTileToScreen(u32 x, u32 y, u32 layer, u16 *ptr)
     }
 }
 
-static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 PalTag, u32 itemId)
+static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 PalTag, enum MiningId itemId)
 {
     struct SpritePalette TempPalette;
     struct SpriteTemplate TempSpriteTemplate = gDummySpriteTemplate;
@@ -2258,7 +2259,7 @@ static struct SpriteTemplate CreatePaletteAndReturnTemplate(u32 TileTag, u32 Pal
     return TempSpriteTemplate;
 }
 
-static void DrawItemSprite(u32 x, u32 y, u32 itemId, u32 itemNumPalTag, u32 itemStateId)
+static void DrawItemSprite(u32 x, u32 y, enum MiningId itemId, u32 itemNumPalTag, u32 itemStateId)
 {
     struct SpriteTemplate gSpriteTemplate;
     u32 posX = x * 16;
@@ -2330,7 +2331,7 @@ static void SetItemState(u32 posX, u32 posY, u32 x, u32 y, u32 itemStateId)
     sMiningUiState->itemMap[posX + x + (posY + y) * 12] = itemStateId;
 }
 
-static void OverwriteItemMapData(u32 posX, u32 posY, u32 itemStateId, u32 itemId)
+static void OverwriteItemMapData(u32 posX, u32 posY, u32 itemStateId, enum MiningId itemId)
 {
     for (u32 x = 0; x < 4; x++)
     {
@@ -2347,7 +2348,7 @@ static void OverwriteItemMapData(u32 posX, u32 posY, u32 itemStateId, u32 itemId
     || posY + MiningUtil_GetTopValue(itemId) > yBorder
 #define IGNORE_COORDS 255
 
-static bool32 CheckIfItemCanBePlaced(u32 itemId, u32 posX, u32 posY, u32 xBorder, u32 yBorder)
+static bool32 CheckIfItemCanBePlaced(enum MiningId itemId, u32 posX, u32 posY, u32 xBorder, u32 yBorder)
 {
     for (u32 i = 1; i <= 4; i++)
     {
@@ -2358,7 +2359,7 @@ static bool32 CheckIfItemCanBePlaced(u32 itemId, u32 posX, u32 posY, u32 xBorder
     return TRUE; // If it can be placed, return true
 }
 
-static void DoDrawRandomItem(u32 itemStateId, u32 itemId)
+static void DoDrawRandomItem(u32 itemStateId, enum MiningId itemId)
 {
     u32 x, y, xMax, yMax, xMin, yMin, paletteTag;
     u32 validX[24] = {0};
@@ -2421,7 +2422,7 @@ static void DoDrawRandomItem(u32 itemStateId, u32 itemId)
     }
 }
 
-static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId) // PSF magic
+static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, enum MiningId itemId) // PSF magic
 {
     u32 height = MiningUtil_GetTopValue(itemId) + 1;
     u32 width =  MiningUtil_GetLeftValue(itemId) + 1;
@@ -2446,7 +2447,7 @@ static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, u32 itemId) // PSF magic
 
 
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_ENABLE_STONE_GENERATION_OPTIONS == FALSE
-static bool32 DoesStoneFitInItemMap(u32 itemId)
+static bool32 DoesStoneFitInItemMap(enum MiningId itemId)
 {
     if (itemId == MININGID_NONE)
         return FALSE;
@@ -2464,7 +2465,7 @@ static bool32 DoesStoneFitInItemMap(u32 itemId)
 }
 #endif
 
-static void DoDrawRandomStone(u32 itemId)
+static void DoDrawRandomStone(enum MiningId itemId)
 {
     u32 x = Random() % MINING_WALL_WIDTH;
     u32 y = Random() % MINING_WALL_HEIGHT;
@@ -2886,7 +2887,7 @@ static void Task_WaitButtonPressOpening(u8 taskId)
 static void Task_MiningPrintResult(u8 taskId)
 {
     u32 itemIndex = ConvertLoadGameStateToItemIndex();
-    u32 itemId = GetBuriedBagItemId(itemIndex);
+    enum Item itemId = GetBuriedBagItemId(itemIndex);
 
     if (gPaletteFade.active)
         return;
@@ -2937,7 +2938,7 @@ static u32 ConvertLoadGameStateToItemIndex(void)
     }
 }
 
-static void GetItemOrPrintError(u8 taskId, u32 itemIndex, u32 itemId)
+static void GetItemOrPrintError(u8 taskId, u32 itemIndex, enum Item itemId)
 {
     sMiningUiState->loadGameState++;
 
@@ -2951,7 +2952,7 @@ static void GetItemOrPrintError(u8 taskId, u32 itemIndex, u32 itemId)
     gTasks[taskId].func = Task_WaitButtonPressOpening;
 }
 
-static void CheckItemAndPrint(u8 taskId, u32 itemIndex, u32 itemId)
+static void CheckItemAndPrint(u8 taskId, u32 itemIndex, enum Item itemId)
 {
     sMiningUiState->loadGameState++;
 
@@ -3022,7 +3023,7 @@ static void HandleGameFinish(u8 taskId)
     gTasks[taskId].func = Task_WaitButtonPressOpening;
 }
 
-static void PrintItemSuccess(u32 itemId)
+static void PrintItemSuccess(enum Item itemId)
 {
     CopyItemName(itemId,gStringVar1);
     StringExpandPlaceholders(gStringVar2, COMPOUND_STRING("{STR_VAR_1}\nwas obtained!"));
@@ -3034,7 +3035,7 @@ static u32 GetTotalNumberOfBuriedItems(void)
     u32 count = 0;
 
     for (u32 itemIndex = 0; itemIndex < MINING_MAX_NUM_BURIED_ITEMS; itemIndex++)
-        if (GetBuriedBagItemId(itemIndex))
+        if (GetBuriedBagItemId(itemIndex) != ITEM_NONE)
             count++;
 
     return count;
@@ -3071,7 +3072,7 @@ static void InitBuriedItems(void)
     }
 }
 
-static void SetBuriedItemsId(u32 index, u32 itemId)
+static void SetBuriedItemsId(u32 index, enum MiningId itemId)
 {
     sMiningUiState->buriedItems[index].bagItemId = sMiningItemList[itemId].bagItemId;
     sMiningUiState->buriedItems[index].miningItemId = itemId;
@@ -3082,12 +3083,12 @@ static void SetBuriedItemStatus(u32 index, bool32 status)
     sMiningUiState->buriedItems[index].isDugUp = status;
 }
 
-static u32 GetBuriedBagItemId(u32 index)
+static enum Item GetBuriedBagItemId(u32 index)
 {
     return sMiningUiState->buriedItems[index].bagItemId;
 }
 
-static u32 GetBuriedMiningItemId(u32 index)
+static enum MiningId GetBuriedMiningItemId(u32 index)
 {
     return sMiningUiState->buriedItems[index].miningItemId;
 }
