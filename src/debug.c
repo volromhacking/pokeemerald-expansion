@@ -15,6 +15,7 @@
 #include "event_object_movement.h"
 #include "event_scripts.h"
 #include "field_message_box.h"
+#include "field_move.h"
 #include "field_screen_effect.h"
 #include "field_weather.h"
 #include "follower_npc.h"
@@ -99,6 +100,7 @@ enum FlagsVarsDebugMenu
     DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_NATDEX,
     DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_POKENAV,
     DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_MATCH_CALL,
+    DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_RIBBONS,
     DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_RUN_SHOES,
     DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_LOCATIONS,
     DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_BADGES_ALL,
@@ -312,6 +314,7 @@ static void DebugAction_PCBag_ClearBoxes(u8 taskId);
 static void DebugAction_Party_HealParty(u8 taskId);
 static void DebugAction_Party_ClearPokerus(u8 taskId);
 static void DebugAction_Party_ClearParty(u8 taskId);
+static void DebugAction_Party_SetFieldMovesParty(u8 taskId);
 static void DebugAction_Party_SetParty(u8 taskId);
 static void DebugAction_Party_BattleSingle(u8 taskId);
 
@@ -329,6 +332,7 @@ static void DebugAction_FlagsVars_SwitchDex(u8 taskId);
 static void DebugAction_FlagsVars_SwitchNatDex(u8 taskId);
 static void DebugAction_FlagsVars_SwitchPokeNav(u8 taskId);
 static void DebugAction_FlagsVars_SwitchMatchCall(u8 taskId);
+static void DebugAction_FlagsVars_SwitchRibbons(u8 taskId);
 static void DebugAction_FlagsVars_ToggleFlyFlags(u8 taskId);
 static void DebugAction_FlagsVars_ToggleBadgeFlags(u8 taskId);
 static void DebugAction_FlagsVars_ToggleGameClear(u8 taskId);
@@ -414,6 +418,7 @@ extern const u8 Debug_BerryWeedsDisabled[];
 
 extern const u8 Common_EventScript_MoveRelearner[];
 
+static const struct DebugSelection sGiveAllRibbonsSelection;
 static const struct DebugSelection sWarpSelection;
 static const struct DebugSelection sSetWeatherSelection;
 static const struct DebugSelection sSpeciesGeneratorSelection;
@@ -635,6 +640,7 @@ static const struct DebugMenuOption sDebugMenu_Actions_EditPokemon[] =
     { COMPOUND_STRING("Set Hidden Nature"),  DebugAction_ExecuteScript, Debug_EventScript_SetHiddenNature },
     { COMPOUND_STRING("Set Friendship"),     DebugAction_ExecuteScript, Debug_EventScript_SetFriendship },
     { COMPOUND_STRING("Set Ability"),        DebugAction_ExecuteScript, Debug_EventScript_SetAbility },
+    { COMPOUND_STRING("Give all ribbons"),   DebugAction_Selection_Init, &sGiveAllRibbonsSelection },
     { NULL }
 };
 
@@ -653,6 +659,7 @@ static const struct DebugMenuOption sDebugMenu_Actions_Party[] =
     { COMPOUND_STRING("Give Pokerus"),       DebugAction_ExecuteScript, Debug_EventScript_GivePokerus },
     { COMPOUND_STRING("Clear Pokerus"),      DebugAction_Party_ClearPokerus},
     { COMPOUND_STRING("Clear Party"),        DebugAction_Party_ClearParty },
+    { COMPOUND_STRING("Set Field Moves Party"),   DebugAction_Party_SetFieldMovesParty },
     { COMPOUND_STRING("Set Party"),          DebugAction_Party_SetParty },
     { COMPOUND_STRING("Start Debug Battle"), DebugAction_Party_BattleSingle },
     { NULL }
@@ -752,6 +759,7 @@ static const struct DebugMenuOption sDebugMenu_Actions_Flags[] =
     [DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_NATDEX]        = { COMPOUND_STRING("Toggle {STR_VAR_1}National Dex"),    DebugAction_ToggleFlag, DebugAction_FlagsVars_SwitchNatDex },
     [DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_POKENAV]       = { COMPOUND_STRING("Toggle {STR_VAR_1}PokéNav"),         DebugAction_ToggleFlag, DebugAction_FlagsVars_SwitchPokeNav },
     [DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_MATCH_CALL]    = { COMPOUND_STRING("Toggle {STR_VAR_1}Match Call"),      DebugAction_ToggleFlag, DebugAction_FlagsVars_SwitchMatchCall },
+    [DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_RIBBONS]       = { COMPOUND_STRING("Toggle {STR_VAR_1}Ribbons"),         DebugAction_ToggleFlag, DebugAction_FlagsVars_SwitchRibbons },
     [DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_RUN_SHOES]     = { COMPOUND_STRING("Toggle {STR_VAR_1}Running Shoes"),   DebugAction_ToggleFlag, DebugAction_FlagsVars_RunningShoes },
     [DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_LOCATIONS]     = { COMPOUND_STRING("Toggle {STR_VAR_1}Fly Flags"),       DebugAction_ToggleFlag, DebugAction_FlagsVars_ToggleFlyFlags },
     [DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_BADGES_ALL]    = { COMPOUND_STRING("Toggle {STR_VAR_1}All badges"),      DebugAction_ToggleFlag, DebugAction_FlagsVars_ToggleBadgeFlags },
@@ -1344,6 +1352,12 @@ static void DebugSelectionStep_ReturnToGiveMenu(u8 taskId)
     DebugAction_OpenSubMenu(taskId, sDebugMenu_Actions_Give);
 }
 
+static void DebugSelectionStep_ReturnToEditPokemonMenu(u8 taskId)
+{
+    Debug_RemoveCallbackMenu();
+    DebugAction_OpenSubMenu(taskId, sDebugMenu_Actions_EditPokemon);
+}
+
 static void DebugSelectionStep_ReturnToTrainersMenu(u8 taskId)
 {
     Debug_DestroyMenu(taskId);
@@ -1552,6 +1566,9 @@ static u32 Debug_CheckToggleFlags(u8 id)
         break;
     case DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_MATCH_CALL:
         result = FlagGet(FLAG_ADDED_MATCH_CALL_TO_POKENAV) && FlagGet(FLAG_HAS_MATCH_CALL);
+        break;
+    case DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_RIBBONS:
+        result = FlagGet(FLAG_SYS_RIBBON_GET);
         break;
     case DEBUG_FLAGVAR_MENU_ITEM_TOGGLE_RUN_SHOES:
         result = FlagGet(FLAG_SYS_B_DASH);
@@ -2194,7 +2211,7 @@ static const struct DebugSelectionStep sItemGeneratorSelectionStep = {
 static const struct DebugSelection sSpeciesGeneratorSelection = {
     .onInit = Debug_CreateInputDisplayWindow,
     .onCancel = DebugSelectionStep_ReturnToUtilMenu,
-    .onComplete = DebugSelection_SpeciesGenerator_OnComplete,//DebugSelection_SetWarp_OnComplete,
+    .onComplete = DebugSelection_SpeciesGenerator_OnComplete,
     .steps = {&sSpeciesGeneratorSelectionStep, &sRandomGeneratorArgsSelectionStep},
     .maxSteps = 2,
 };
@@ -2202,7 +2219,7 @@ static const struct DebugSelection sSpeciesGeneratorSelection = {
 static const struct DebugSelection sItemGeneratorSelection = {
     .onInit = Debug_CreateInputDisplayWindow,
     .onCancel = DebugSelectionStep_ReturnToUtilMenu,
-    .onComplete = DebugSelection_ItemGenerator_OnComplete,//DebugSelection_SetWarp_OnComplete,
+    .onComplete = DebugSelection_ItemGenerator_OnComplete,
     .steps = {&sItemGeneratorSelectionStep, &sRandomGeneratorArgsSelectionStep},
     .maxSteps = 2,
 };
@@ -2909,8 +2926,7 @@ static const struct DebugSelection sSetVarSelection = {
 
 static void DebugAction_FlagsVars_PokedexFlags_All(u8 taskId)
 {
-    u16 i;
-    for (i = 0; i < NATIONAL_DEX_COUNT; i++)
+    for (enum NationalDexOrder i = 0; i < NATIONAL_DEX_COUNT; i++)
     {
         GetSetPokedexFlag(i + 1, FLAG_SET_CAUGHT);
         GetSetPokedexFlag(i + 1, FLAG_SET_SEEN);
@@ -3002,6 +3018,15 @@ static void DebugAction_FlagsVars_SwitchMatchCall(u8 taskId)
         FlagSet(FLAG_ADDED_MATCH_CALL_TO_POKENAV);
         FlagSet(FLAG_HAS_MATCH_CALL);
     }
+}
+
+static void DebugAction_FlagsVars_SwitchRibbons(u8 taskId)
+{
+    if (FlagGet(FLAG_SYS_RIBBON_GET))
+        PlaySE(SE_PC_OFF);
+    else
+        PlaySE(SE_PC_LOGIN);
+    FlagToggle(FLAG_SYS_RIBBON_GET);
 }
 
 static void DebugAction_FlagsVars_RunningShoes(u8 taskId)
@@ -3135,9 +3160,12 @@ static void Debug_DisplayItemIcon(u8 taskId, enum Item itemId)
 {
     DestroyDebugIcon(taskId);
     gTasks[taskId].tSpriteId = AddItemIconSprite(DEBUG_ICON_TAG, DEBUG_ICON_TAG,  itemId);
-    gSprites[gTasks[taskId].tSpriteId].x = DEBUG_NUMBER_ICON_X + 8;
-    gSprites[gTasks[taskId].tSpriteId].y = DEBUG_NUMBER_ICON_Y + 8;
-    gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
+    if (gTasks[taskId].tSpriteId != MAX_SPRITES)
+    {
+        gSprites[gTasks[taskId].tSpriteId].x = DEBUG_NUMBER_ICON_X + 8;
+        gSprites[gTasks[taskId].tSpriteId].y = DEBUG_NUMBER_ICON_Y + 8;
+        gSprites[gTasks[taskId].tSpriteId].oam.priority = 0;
+    }
 }
 
 static void DebugSelectionStep_UpdateItem(u8 taskId, u8 digits, u32 min, u32 max)
@@ -3778,6 +3806,63 @@ static void DebugAction_PCBag_ClearBoxes(u8 taskId)
     Debug_DestroyMenu_Full(taskId);
     ScriptContext_Enable();
 }
+
+// *******************************
+// Actions Pokemon Edit
+
+static u32 DebugSelectionStep_GetPartyCount(u8 taskId)
+{
+    return (CalculatePlayerPartyCount() - 1);
+}
+
+static void DebugSelectionStep_UpdatePartyMember(u8 taskId, u8 digits, u32 min, u32 max)
+{
+    u32 partyIndex = gTasks[taskId].tInput;
+    ConvertIntToDecimalStringN(gStringVar3, partyIndex, STR_CONV_MODE_LEADING_ZEROS, digits);
+    StringExpandPlaceholders(gStringVar1, COMPOUND_STRING("Party Id: {STR_VAR_3}"));
+    GetMonData(&gParties[B_TRAINER_PLAYER][partyIndex], MON_DATA_NICKNAME, gStringVar2);
+
+    StringCopy(gStringVar3, COMPOUND_STRING(""));
+    Debug_ResetInputDisplayMonIcon(taskId, GetMonData(&gParties[B_TRAINER_PLAYER][partyIndex], MON_DATA_SPECIES));
+    DebugNativeStep_PrintWindowSelection(taskId);
+}
+
+static const struct DebugSelectionStep sPartyMemberSelectionStep = {
+    .stepUpdate = DebugSelectionStep_UpdatePartyMember,
+    .stepConfirm = DebugSelectionStep_GenericInputConfirmAndDestroyIcon,
+    .minValue = 0,
+    .maxFunc = DebugSelectionStep_GetPartyCount,
+    .useMaxFunc = TRUE,
+    .digits = 1
+};
+
+static bool32 DebugSelection_Pokemon_GiveAllRibbons(u8 taskId)
+{
+    u32 partyIndex = DebugSelection_GetData(taskId, 0);
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][partyIndex];
+    u32 maxContextRibbon = 4;
+    for (u32 i = MON_DATA_COOL_RIBBON; i < MON_DATA_COOL_RIBBON + CONTEST_CATEGORIES_COUNT; i++)
+    {
+        SetMonData(mon, i, &maxContextRibbon);
+    }
+    bool32 hasRibbon = TRUE;
+    for (u32 i = MON_DATA_CHAMPION_RIBBON; i <= MON_DATA_WORLD_RIBBON; i++)
+    {
+        SetMonData(mon, i, &hasRibbon);
+    }
+    FlagSet(FLAG_SYS_RIBBON_GET);
+    DebugNativeStep_CloseDebugWindow(taskId);
+    return TRUE;
+}
+
+static const struct DebugSelection sGiveAllRibbonsSelection = {
+    .onInit = Debug_CreateInputDisplayWindow,
+    .onCancel = DebugSelectionStep_ReturnToEditPokemonMenu,
+    .onComplete = DebugSelection_Pokemon_GiveAllRibbons,
+    .steps = {&sPartyMemberSelectionStep},
+    .maxSteps = 1,
+};
+
 
 // *******************************
 // Actions Sound
@@ -4815,6 +4900,25 @@ const struct Trainer sDebugTrainers[DIFFICULTY_COUNT][DEBUG_TRAINERS_COUNT] =
 {
 #include "data/debug_trainers.h"
 };
+
+static void DebugAction_Party_SetFieldMovesParty(u8 taskId)
+{
+    ZeroPlayerPartyMons();
+    u32 max = FIELD_MOVES_COUNT;
+    assertf(FIELD_MOVES_COUNT <= PARTY_SIZE * MAX_MON_MOVES, "Can't load more than %d field moves in party", PARTY_SIZE * MAX_MON_MOVES)
+    {
+        max = PARTY_SIZE * MAX_MON_MOVES;
+    }
+    for (u32 i = 0; i < max; i++)
+    {
+        if (i % 4 == 0)
+            CreateRandomMon(&gParties[B_TRAINER_PLAYER][i / 4], SPECIES_SMEARGLE, 100);
+        enum Move move = FieldMove_GetMoveId(i);
+        SetMonData(&gParties[B_TRAINER_PLAYER][i / 4], MON_DATA_MOVE1 + (i % 4), &move);
+    }
+    ScriptContext_Enable();
+    Debug_DestroyMenu_Full(taskId);
+}
 
 const struct Trainer* GetDebugAiTrainer(void)
 {
