@@ -2482,27 +2482,6 @@ static void DoDrawRandomStone(enum MiningId itemId)
 
 static void HandleItemState(u32 itemId)
 {
-    /*u32 full = MiningUtil_GetTotalTileAmount(GetBuriedMiningItemId(itemId));
-    u32 stop = full + 1;
-
-    if (sMiningUiState->buriedItems[itemId].buriedState < full && sMiningUiState->buriedItems[itemId].isSelected)
-    {
-        for (u32 i = 0; i < MINING_WALL_SIZE; i++)
-        {
-            if (sMiningUiState->itemMap[i] == itemId + 1 && sMiningUiState->layerMap[i] == 6)
-            {
-                sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
-                sMiningUiState->buriedItems[itemId].buriedState++;
-            }
-        }
-    }
-    else if (sMiningUiState->buriedItems[itemId].buriedState == full)
-    {
-        BeginNormalPaletteFade(1 << (16 + gSprites[sMiningUiState->buriedItems[itemId].spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
-        sMiningUiState->buriedItems[itemId].buriedState = stop;
-        SetBuriedItemStatus(itemId, TRUE);
-        PlaySE(SE_RG_CARD_OPEN);
-    }*/
     struct BuriedItem *item = &sMiningUiState->buriedItems[itemId];
     u32 tileCount = MiningUtil_GetTotalTileAmount(item->miningItemId);
 
@@ -2520,11 +2499,10 @@ static void HandleItemState(u32 itemId)
     else if (item->buriedState == tileCount)
     {
         BeginNormalPaletteFade(1 << (16 + gSprites[item->spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
-        item->buriedState = tileCount + 1; // sentinel: already revealed
+        item->buriedState = tileCount + 1;
         SetBuriedItemStatus(itemId, TRUE);
         PlaySE(SE_RG_CARD_OPEN);
     }
-}
 }
 
 static void Mining_CheckItemFound(void)
