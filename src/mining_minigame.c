@@ -98,7 +98,7 @@ struct BuriedItem
     enum MiningId miningItemId;
     bool32 isDugUp;
     bool32 isSelected;
-    u32 buriedState;
+    u32 buriedItemTileCount;
     u32 spriteId;
 };
 
@@ -1426,10 +1426,10 @@ static void Mining_Init(MainCallback callback)
     sMiningUiState->stressLevelPos = 0;
 
     // Default the values for each item
-    sMiningUiState->buriedItems[0].buriedState = 0;
-    sMiningUiState->buriedItems[1].buriedState = 0;
-    sMiningUiState->buriedItems[2].buriedState = 0;
-    sMiningUiState->buriedItems[3].buriedState = 0;
+    sMiningUiState->buriedItems[0].buriedItemTileCount = 0;
+    sMiningUiState->buriedItems[1].buriedItemTileCount = 0;
+    sMiningUiState->buriedItems[2].buriedItemTileCount = 0;
+    sMiningUiState->buriedItems[3].buriedItemTileCount = 0;
 
     // Always two stones
     sMiningUiState->buriedStones[0].isSelected = TRUE;
@@ -1782,9 +1782,11 @@ static bool32 Mining_LoadBgGraphics(void)
         LoadPalette(sStressLevelAndTerrainPalette, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
         LoadPalette(sUiPalette, BG_PLTT_ID(0), PLTT_SIZE_4BPP);
         sMiningUiState->loadGameState++;
+        break;
     case 3:
         Mining_DrawRandomTerrain();
         sMiningUiState->loadGameState++;
+        break;
     default:
         sMiningUiState->loadGameState = STATE_GAME_START;
         return TRUE;
@@ -2485,7 +2487,7 @@ static void HandleItemState(u32 itemId)
     struct BuriedItem *item = &sMiningUiState->buriedItems[itemId];
     u32 tileCount = MiningUtil_GetTotalTileAmount(item->miningItemId);
 
-    if (item->isSelected && item->buriedState < tileCount)
+    if (item->isSelected && item->buriedItemTileCount < tileCount)
     {
         for (u32 i = 0; i < MINING_WALL_SIZE; i++)
         {
@@ -2493,13 +2495,13 @@ static void HandleItemState(u32 itemId)
                 continue;
 
             sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
-            item->buriedState++;
+            item->buriedItemTileCount++;
         }
     }
-    else if (item->buriedState == tileCount)
+    else if (item->buriedItemTileCount == tileCount)
     {
         BeginNormalPaletteFade(1 << (16 + gSprites[item->spriteId].oam.paletteNum), 2, 16, 0, RGB_WHITE);
-        item->buriedState = tileCount + 1;
+        item->buriedItemTileCount = tileCount + 1;
         SetBuriedItemStatus(itemId, TRUE);
         PlaySE(SE_RG_CARD_OPEN);
     }
