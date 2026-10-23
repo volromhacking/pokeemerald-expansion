@@ -17,7 +17,7 @@
 #define MINING_SE_ITEM_SPARKLE          SE_RG_CARD_OPEN
 
 /*********** ITEM SPRITE TAGS ************/
-enum
+enum ItemSpriteTags
 {
     MINING_TAG_ITEM_HEARTSCALE = 12,
     MINING_TAG_ITEM_HARDSTONE,

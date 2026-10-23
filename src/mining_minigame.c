@@ -88,7 +88,6 @@ static void InitBuriedItems(void);
 static void SetBuriedItemsId(u32 index, enum MiningId itemId);
 static void SetBuriedItemStatus(u32 index, bool32 status);
 static enum Item GetBuriedBagItemId(u32 index);
-static enum MiningId GetBuriedMiningItemId(u32 index);
 static bool32 GetBuriedItemStatus(u32 index);
 static void ExitMiningUI(u8 taskId);
 
@@ -107,7 +106,7 @@ struct MiningState
     MainCallback leavingCallback;   // Callback to leave the Ui
     u32 loadGameState;
     u32 layerMap[MINING_WALL_SIZE];             // Array representing the screen. Determines virtual layers
-    u32 itemMap[MINING_WALL_SIZE];              // Determines where items are on the screen
+    u32 itemMap[MINING_WALL_SIZE];    // Determines where items are on the screen
     u32 cursorX;
     u32 cursorY;
 
@@ -146,7 +145,7 @@ struct MiningState
 #define WIN_MSG             0
 
 // Other Sprite Tags
-enum
+enum SpriteAndPaletteTag
 {
     TAG_DUMMY,
     TAG_CURSOR,
@@ -162,7 +161,7 @@ enum
     TAG_HIT_PICKAXE,
 };
 
-enum
+enum ItemRarity
 {
     RARITY_COMMON,
     RARITY_UNCOMMON,
@@ -178,7 +177,7 @@ enum
 #define ITEM_STONE_SPRITE_PRIORITY  3
 #endif
 
-enum
+enum UiLoadState
 {
     STATE_CLEAR_SCREEN,
     STATE_RESET_DATA,
@@ -190,12 +189,8 @@ enum
     STATE_SET_CALLBACKS,
 };
 
-enum
+enum MinigameState
 {
-    STATE_GRAPHICS_VRAM,
-    STATE_GRAPHICS_DECOMPRESS,
-    STATE_GRAPHICS_PALETTES,
-    STATE_GRAPHICS_TERRAIN,
     STATE_GAME_START,
     STATE_GAME_FINISH,
     STATE_ITEM_NAME_1,
@@ -209,7 +204,7 @@ enum
     STATE_QUIT,
 };
 
-enum
+enum StressLevelPos
 {
     STRESS_LEVEL_POS_0,
     STRESS_LEVEL_POS_1,
@@ -222,18 +217,29 @@ enum
     STRESS_LEVEL_POS_MAX,
 };
 
-enum
+enum ItemState
 {
     ITEM_STATE_ID_NONE,     // Placeholder ID
     ITEM_STATE_ID_1,        // ID for item 1 in zone 1
     ITEM_STATE_ID_2,        // ID for item 2 in zone 2
     ITEM_STATE_ID_3,        // ID for item 3 in zone 3
     ITEM_STATE_ID_4,        // ID for item 4 in zone 4
-    ITEM_STATE_ID_5,        // probably leftover from refactoring ?
-    ITEM_STATE_ID_6,        // Stone
+    ITEM_STATE_TILE_DUG_UP,
+    ITEM_STATE_ID_STONE,    // Stones dont need seperate IDs in the itemMap array. We just need to know that there is a stone, so we use this ID for both stones.
 };
 
-enum
+enum TerrainLayer
+{
+    TERRAIN_LAYER_0,
+    TERRAIN_LAYER_1,
+    TERRAIN_LAYER_2,
+    TERRAIN_LAYER_3,
+    TERRAIN_LAYER_4,
+    TERRAIN_LAYER_5,
+    TERRAIN_LAYER_CLEARED,
+};
+
+enum BgLayers
 {
     BG_TEXT_BOX,
     BG_COLLAPSE_SCREEN,
@@ -1421,7 +1427,7 @@ static void Mining_Init(MainCallback callback)
     sMiningUiState->shouldShake = FALSE;
     sMiningUiState->isCollapseAnimActive = FALSE;
     sMiningUiState->shakeDuration = 0;
-    sMiningUiState->loadGameState = 0;
+    sMiningUiState->loadGameState = STATE_GAME_START;
     sMiningUiState->stressLevelCount = 0;
     sMiningUiState->stressLevelPos = 0;
 
@@ -1804,9 +1810,10 @@ static void ClearItemMap(void)
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == FALSE
 static enum MiningId GetRandomItemId()
 {
-    u32 rarity, index;
-    enum MiningId itemId = MININGID_NONE;
+    u32 index;
     u32 rnd = Random() % 7;
+    enum ItemRarity rarity;
+    enum MiningId itemId = MININGID_NONE;
 
     if (rnd < 4)
         rarity = RARITY_COMMON;
@@ -1936,7 +1943,7 @@ static void Task_MiningMainInput(u8 taskId)
             sMiningUiState->ShakeHitEffect = CreateSprite(&sSpriteHitEffectHammer, (sMiningUiState->cursorX * 16) + 8, (sMiningUiState->cursorY * 16) + 8, 0);
             sMiningUiState->ShakeHitTool = CreateSprite(&sSpriteHitHammer, (sMiningUiState->cursorX * 16) + 24, sMiningUiState->cursorY * 16, 0);
 
-            if (sMiningUiState->layerMap[cursorPos] == 6 && sMiningUiState->itemMap[cursorPos] > 4)
+            if (sMiningUiState->layerMap[cursorPos] == TERRAIN_LAYER_CLEARED && sMiningUiState->itemMap[cursorPos] > 4)
             {
                 m4aMPlayStop(&gMPlayInfo_SE1);
                 m4aMPlayStop(&gMPlayInfo_SE2);
@@ -1953,7 +1960,7 @@ static void Task_MiningMainInput(u8 taskId)
         {
             sMiningUiState->ShakeHitEffect = CreateSprite(&sSpriteHitEffectPickaxe, (sMiningUiState->cursorX * 16) + 8, (sMiningUiState->cursorY * 16) + 8, 0);
             sMiningUiState->ShakeHitTool = CreateSprite(&sSpriteHitPickaxe, (sMiningUiState->cursorX * 16) + 24, sMiningUiState->cursorY * 16, 0);
-            if (sMiningUiState->layerMap[cursorPos] == 6 && sMiningUiState->itemMap[cursorPos] > 4)
+            if (sMiningUiState->layerMap[cursorPos] == TERRAIN_LAYER_CLEARED && sMiningUiState->itemMap[cursorPos] > 4)
             {
                 m4aMPlayStop(&gMPlayInfo_SE1);
                 m4aMPlayStop(&gMPlayInfo_SE2);
@@ -2206,37 +2213,37 @@ static void Terrain_DrawLayerTileToScreen(u32 x, u32 y, u32 layer, u16 *ptr)
     switch(layer)
     {
     // layer 0 and 1 - tile: 0
-    case 0:
+    case TERRAIN_LAYER_0:
         OverwriteTileDataInTilemapBuffer(0x20, tileX, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x21, tileX + 1, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x24, tileX, tileY + 1, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x25, tileX + 1, tileY + 1, ptr, 0x01);
         break;
-    case 1:
+    case TERRAIN_LAYER_1:
         OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x1E, tileX, tileY + 1, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x1F, tileX + 1, tileY + 1, ptr, 0x01);
         break;
-    case 2:
+    case TERRAIN_LAYER_2:
         OverwriteTileDataInTilemapBuffer(0x10, tileX, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x11, tileX + 1, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x15, tileX, tileY + 1, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x16, tileX + 1, tileY + 1, ptr, 0x01);
         break;
-    case 3:
+    case TERRAIN_LAYER_3:
         OverwriteTileDataInTilemapBuffer(0x0C, tileX, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x0D, tileX + 1, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x12, tileX, tileY + 1, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x13, tileX + 1, tileY + 1, ptr, 0x01);
         break;
-    case 4:
+    case TERRAIN_LAYER_4:
         OverwriteTileDataInTilemapBuffer(0x05, tileX, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x06, tileX + 1, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x0A, tileX, tileY + 1, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x0B, tileX + 1, tileY + 1, ptr, 0x01);
         break;
-    case 5:
+    case TERRAIN_LAYER_5:
         OverwriteTileDataInTilemapBuffer(0x01, tileX, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x02, tileX + 1, tileY, ptr, 0x01);
         OverwriteTileDataInTilemapBuffer(0x03, tileX, tileY + 1, ptr, 0x01);
@@ -2363,7 +2370,8 @@ static bool32 CheckIfItemCanBePlaced(enum MiningId itemId, u32 posX, u32 posY, u
 
 static void DoDrawRandomItem(u32 itemStateId, enum MiningId itemId)
 {
-    u32 x, y, xMax, yMax, xMin, yMin, paletteTag;
+    u32 x, y, xMax, yMax, xMin, yMin;
+    enum SpriteAndPaletteTag paletteTag;
     u32 validX[24] = {0};
     u32 validY[24] = {0};
     u32 numValid = 0;
@@ -2478,8 +2486,8 @@ static void DoDrawRandomStone(enum MiningId itemId)
         y = Random() % MINING_WALL_HEIGHT;
     }
 
-    DrawItemSprite(x, y, itemId, TAG_DUMMY, ITEM_STATE_ID_NONE); // We use ITEM_STATE_ID_NONE becasue here, a stone is guaranteed
-    OverwriteItemMapData(x, y, ITEM_STATE_ID_6, itemId);
+    DrawItemSprite(x, y, itemId, TAG_DUMMY, ITEM_STATE_ID_NONE); // We use ITEM_STATE_ID_NONE because here, a stone is guaranteed
+    OverwriteItemMapData(x, y, ITEM_STATE_ID_STONE, itemId);
 }
 
 static void HandleItemState(u32 itemId)
@@ -2491,10 +2499,10 @@ static void HandleItemState(u32 itemId)
     {
         for (u32 i = 0; i < MINING_WALL_SIZE; i++)
         {
-            if (sMiningUiState->itemMap[i] != itemId + 1 || sMiningUiState->layerMap[i] != ITEM_STATE_ID_6)
+            if (sMiningUiState->itemMap[i] != itemId + 1 || sMiningUiState->layerMap[i] != TERRAIN_LAYER_CLEARED)
                 continue;
 
-            sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
+            sMiningUiState->itemMap[i] = ITEM_STATE_TILE_DUG_UP;
             item->buriedItemTileCount++;
         }
     }
@@ -2516,8 +2524,8 @@ static void Mining_CheckItemFound(void)
 
     for (u32 i = 0; i < MINING_WALL_SIZE; i++)
     {
-        if (sMiningUiState->itemMap[i] == 6 && sMiningUiState->layerMap[i] == 6)
-            sMiningUiState->itemMap[i] = MINING_ITEM_TILE_DUG_UP;
+        if (sMiningUiState->itemMap[i] == ITEM_STATE_ID_STONE && sMiningUiState->layerMap[i] == TERRAIN_LAYER_CLEARED)
+            sMiningUiState->itemMap[i] = ITEM_STATE_TILE_DUG_UP;
     }
 }
 
@@ -2552,7 +2560,7 @@ static void Mining_DrawRandomTerrain(void)
 
     // Start by placing blank layer 3 rocks
     for (i = 0; i < MINING_WALL_SIZE; ++i)
-        sMiningUiState->layerMap[i] = 2;
+        sMiningUiState->layerMap[i] = TERRAIN_LAYER_2;
 
     // Create patches of lighter dirt areas
     totalTimes = 3 + Random() % 5;
@@ -2573,7 +2581,7 @@ static void Mining_DrawRandomTerrain(void)
         for (; row1 < row2; ++row1)
         {
             for (j = col1; j < col2; ++j)
-                sMiningUiState->layerMap[j + row1 * 12] = 4;
+                sMiningUiState->layerMap[j + row1 * 12] = TERRAIN_LAYER_4;
         }
     }
 
@@ -2606,7 +2614,7 @@ static void Mining_DrawRandomTerrain(void)
                 if (AtCornerOfRectangle(k, m, baseRow, baseCol, baseRow + 4, baseCol + 4))
                     continue; // Leave corner out
 
-                sMiningUiState->layerMap[m + k * 12] = 0;
+                sMiningUiState->layerMap[m + k * 12] = TERRAIN_LAYER_0;
             }
         }
     }
@@ -2627,43 +2635,43 @@ static void Terrain_UpdateLayerTileOnScreen(u16 *ptr, s32 ofsX, s32 ofsY)
     u32 i = (sMiningUiState->cursorY - 2 + ofsY) * 12 + sMiningUiState->cursorX + ofsX; // It needs the `-2` because the cursorY value started at `2`
     u32 tileX = (sMiningUiState->cursorX + ofsX) * 2;
     u32 tileY = (sMiningUiState->cursorY + ofsY) * 2;
-    if (sMiningUiState->layerMap[i] < 6)
+    if (sMiningUiState->layerMap[i] < TERRAIN_LAYER_CLEARED)
     {
         sMiningUiState->layerMap[i]++;
 
         switch (sMiningUiState->layerMap[i]) // Each case represents one layer on the wall
         {
-        case 1:
+        case TERRAIN_LAYER_1:
             OverwriteTileDataInTilemapBuffer(0x19, tileX, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x1A, tileX + 1, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x1E, tileX, tileY + 1, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x1F, tileX + 1, tileY + 1, ptr, 0x01);
             break;
-        case 2:
+        case TERRAIN_LAYER_2:
             OverwriteTileDataInTilemapBuffer(0x10, tileX, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x11, tileX + 1, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x15, tileX, tileY + 1, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x16, tileX + 1, tileY + 1, ptr, 0x01);
             break;
-        case 3:
+        case TERRAIN_LAYER_3:
             OverwriteTileDataInTilemapBuffer(0x0C, tileX, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x0D, tileX + 1, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x12, tileX, tileY + 1, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x13, tileX + 1, tileY + 1, ptr, 0x01);
             break;
-        case 4:
+        case TERRAIN_LAYER_4:
             OverwriteTileDataInTilemapBuffer(0x05, tileX, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x06, tileX + 1, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x0A, tileX, tileY + 1, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x0B, tileX + 1, tileY + 1, ptr, 0x01);
             break;
-        case 5:
+        case TERRAIN_LAYER_5:
             OverwriteTileDataInTilemapBuffer(0x01, tileX, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x02, tileX + 1, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x03, tileX, tileY + 1, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x04, tileX + 1, tileY + 1, ptr, 0x01);
             break;
-        case 6:
+        case TERRAIN_LAYER_CLEARED:
             OverwriteTileDataInTilemapBuffer(0x00, tileX, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x00, tileX + 1, tileY, ptr, 0x01);
             OverwriteTileDataInTilemapBuffer(0x00, tileX, tileY + 1, ptr, 0x01);
@@ -2677,7 +2685,7 @@ static bool32 Terrain_Pickaxe_OverwriteTiles(u16 *ptr)
 {
     u32 pos = sMiningUiState->cursorX + (sMiningUiState->cursorY - 2) * 12;
 
-    if (sMiningUiState->itemMap[pos] != MINING_ITEM_TILE_DUG_UP)
+    if (sMiningUiState->itemMap[pos] != ITEM_STATE_TILE_DUG_UP)
     {
         if (sMiningUiState->cursorX != MINING_WALL_BORDER_X_LEFT)
             Terrain_UpdateLayerTileOnScreen(ptr, -1, 0);
@@ -2725,7 +2733,7 @@ static void Terrain_Hammer_OverwriteTiles(u16 *ptr)
         if (sMiningUiState->cursorX != MINING_WALL_BORDER_X_LEFT && sMiningUiState->cursorY != MINING_WALL_BORDER_Y_UP)
             Terrain_UpdateLayerTileOnScreen(ptr, -1, -1);
 
-        if (sMiningUiState->layerMap[pos] != 6)
+        if (sMiningUiState->layerMap[pos] != TERRAIN_LAYER_CLEARED)
             Terrain_Pickaxe_OverwriteTiles(ptr);
     }
 }
@@ -2824,7 +2832,7 @@ static bool32 ClearWindowPlaySelectButtonPress(void)
     if (JOY_NEW(A_BUTTON) && !sMiningUiState->isCollapseAnimActive && !sMiningUiState->shouldShake)
     {
         PlaySE(SE_SELECT);
-        
+
         switch (sMiningUiState->loadGameState)
         {
         case STATE_GAME_FINISH:
@@ -3088,11 +3096,6 @@ static void SetBuriedItemStatus(u32 index, bool32 status)
 static enum Item GetBuriedBagItemId(u32 index)
 {
     return sMiningUiState->buriedItems[index].bagItemId;
-}
-
-static enum MiningId GetBuriedMiningItemId(u32 index)
-{
-    return sMiningUiState->buriedItems[index].miningItemId;
 }
 
 static bool32 GetBuriedItemStatus(u32 index)
