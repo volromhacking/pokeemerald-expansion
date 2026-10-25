@@ -191,6 +191,10 @@ enum UiLoadState
 
 enum MinigameState
 {
+    STATE_GRAPHICS_VRAM,
+    STATE_GRAPHICS_DECOMPRESS,
+    STATE_GRAPHICS_PALETTES,
+    STATE_GRAPHICS_TERRAIN,
     STATE_GAME_START,
     STATE_GAME_FINISH,
     STATE_ITEM_NAME_1,
@@ -1427,7 +1431,7 @@ static void Mining_Init(MainCallback callback)
     sMiningUiState->shouldShake = FALSE;
     sMiningUiState->isCollapseAnimActive = FALSE;
     sMiningUiState->shakeDuration = 0;
-    sMiningUiState->loadGameState = STATE_GAME_START;
+    sMiningUiState->loadGameState = STATE_GRAPHICS_VRAM;
     sMiningUiState->stressLevelCount = 0;
     sMiningUiState->stressLevelPos = 0;
 
@@ -1475,9 +1479,7 @@ static void Mining_Init(MainCallback callback)
 
     // Select the zones from the shuffled array
     for (u32 i = 0; i < amountItemsToSelect; i++)
-    {
         sMiningUiState->buriedItems[zones[i]].isSelected = TRUE;
-    }
 #endif
 
     SetMainCallback2(Mining_SetupCB);
@@ -1631,8 +1633,8 @@ static void MiningUi_Shake(u8 taskId)
         break;
     case 3: // Right 2 - Up 2
         MoveItemSprites(3, -3);
-        gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
-        gSprites[sMiningUiState->ShakeHitTool].invisible = 1;
+        gSprites[sMiningUiState->ShakeHitEffect].invisible = TRUE;
+        gSprites[sMiningUiState->ShakeHitTool].invisible = TRUE;
         sMiningUiState->shakeStepCounter++;
         break;
     case 4:
@@ -1649,8 +1651,8 @@ static void MiningUi_Shake(u8 taskId)
         MoveItemSprites(-2, 4);
         if (!IsStressLevelMax())
         {
-            gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
-            gSprites[sMiningUiState->ShakeHitTool].invisible = 0;
+            gSprites[sMiningUiState->ShakeHitEffect].invisible = FALSE;
+            gSprites[sMiningUiState->ShakeHitTool].invisible = FALSE;
         }
         sMiningUiState->shakeStepCounter++;
         break;
@@ -1666,7 +1668,7 @@ static void MiningUi_Shake(u8 taskId)
         break;
     case 9: // Left 2 - Up 2
         MoveItemSprites(-2, -4);
-        gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
+        gSprites[sMiningUiState->ShakeHitEffect].invisible = TRUE;
         sMiningUiState->shakeStepCounter++;
         break;
     case 10:
@@ -1682,7 +1684,7 @@ static void MiningUi_Shake(u8 taskId)
     case 12: // Right 1 - Down 1
         MoveItemSprites(3, 3);
         if (!IsStressLevelMax())
-            gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
+            gSprites[sMiningUiState->ShakeHitEffect].invisible = FALSE;
         gSprites[sMiningUiState->ShakeHitTool].x += 7;
         StartSpriteAnim(&gSprites[sMiningUiState->ShakeHitTool], 1);
         sMiningUiState->shakeStepCounter++;
@@ -1715,14 +1717,14 @@ static void MiningUi_Shake(u8 taskId)
             sMiningUiState->toggleShakeDuringAnimation = FALSE;
             break;
         }
-        #if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_INFINITE_HITS == TRUE
-        gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
-        #else
+#if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_INFINITE_HITS == TRUE
+        gSprites[sMiningUiState->cursorSpriteIndex].invisible = FALSE;
+#else
         if (IsStressLevelMax())
             WallCollapseAnimation();
-        if (!IsStressLevelMax())
-            gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
-        #endif
+        else
+            gSprites[sMiningUiState->cursorSpriteIndex].invisible = FALSE;
+#endif
         sMiningUiState->shakeStepCounter = 0;
         sMiningUiState->shouldShake = FALSE;
         sMiningUiState->toggleShakeDuringAnimation = FALSE;
@@ -1763,14 +1765,14 @@ static bool32 Mining_LoadBgGraphics(void)
 
     switch (sMiningUiState->loadGameState)
     {
-    case 0:
+    case STATE_GRAPHICS_VRAM:
         ResetTempTileDataBuffers();
         DecompressAndCopyTileDataToVram(1, sCollapseScreenTiles, 0, 0, 0);
         DecompressAndCopyTileDataToVram(2, sStressLevelAndTerrainTiles, 0, 0, 0);
         DecompressAndCopyTileDataToVram(3, sUiTiles, 0, 0, 0);
         sMiningUiState->loadGameState++;
         break;
-    case 1:
+    case STATE_GRAPHICS_DECOMPRESS:
         if (!FreeTempTileDataBuffersIfPossible())
         {
             for (u32 i = 0; i < 32; i++)
@@ -1783,13 +1785,13 @@ static bool32 Mining_LoadBgGraphics(void)
             sMiningUiState->loadGameState++;
         }
         break;
-    case 2:
+    case STATE_GRAPHICS_PALETTES:
         LoadPalette(sCollapseScreenPalette, BG_PLTT_ID(2), PLTT_SIZE_4BPP);
         LoadPalette(sStressLevelAndTerrainPalette, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
         LoadPalette(sUiPalette, BG_PLTT_ID(0), PLTT_SIZE_4BPP);
         sMiningUiState->loadGameState++;
         break;
-    case 3:
+    case STATE_GRAPHICS_TERRAIN:
         Mining_DrawRandomTerrain();
         sMiningUiState->loadGameState++;
         break;
@@ -1848,7 +1850,7 @@ static void InitItemsIfSelected(u32 item)
     if (sMiningUiState->buriedItems[item].isSelected)
     {
         #if MINING_DEBUG_ENABLE == TRUE && MINING_DEBUG_ENABLE_ITEM_GENERATION_OPTIONS == TRUE
-        switch(item)
+        switch (item)
         {
         case 0:
             itemId = MINING_DEBUG_MININGID_ITEM1;
@@ -1892,7 +1894,7 @@ static void Mining_LoadSpriteGraphics(void)
     DoDrawRandomStone(MINING_DEBUG_MININGID_STONE1);
     DoDrawRandomStone(MINING_DEBUG_MININGID_STONE2);
     #else
-    enum MiningId stone = MININGID_NONE;
+    enum MiningId stone;
     for (u32 i = 0; i < MINING_MAX_NUM_BURIED_STONES; i++)
     {
         stone = MININGID_NONE;
@@ -2210,7 +2212,7 @@ static void Terrain_DrawLayerTileToScreen(u32 x, u32 y, u32 layer, u16 *ptr)
     u32 tileX = x * 2;
     u32 tileY = y * 2;
 
-    switch(layer)
+    switch (layer)
     {
     // layer 0 and 1 - tile: 0
     case TERRAIN_LAYER_0:
@@ -2274,7 +2276,7 @@ static void DrawItemSprite(u32 x, u32 y, enum MiningId itemId, u32 itemNumPalTag
     u32 posX = x * 16;
     u32 posY = y * 16 + 32;
 
-    switch(itemId)
+    switch (itemId)
     {
     case MININGID_STONE_1x4:
         LoadSpritePalette(sSpritePal_Stone1x4);
@@ -2354,7 +2356,7 @@ static void OverwriteItemMapData(u32 posX, u32 posY, u32 itemStateId, enum Minin
 
 // Defines && Macros
 #define BORDERCHECK_COND(itemId) posX + MiningUtil_GetLeftValue(itemId) > xBorder \
-    || posY + MiningUtil_GetTopValue(itemId) > yBorder
+                              || posY + MiningUtil_GetTopValue(itemId) > yBorder
 #define IGNORE_COORDS 255
 
 static bool32 CheckIfItemCanBePlaced(enum MiningId itemId, u32 posX, u32 posY, u32 xBorder, u32 yBorder)
@@ -2376,7 +2378,7 @@ static void DoDrawRandomItem(u32 itemStateId, enum MiningId itemId)
     u32 validY[24] = {0};
     u32 numValid = 0;
 
-    switch(itemStateId)
+    switch (itemStateId)
     {
     default:
     case ITEM_STATE_ID_1:
@@ -2437,10 +2439,10 @@ static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, enum MiningId itemId) // PSF ma
     u32 height = MiningUtil_GetTopValue(itemId) + 1;
     u32 width =  MiningUtil_GetLeftValue(itemId) + 1;
 
-    if ((x + width) > MINING_WALL_WIDTH)
+    if (x + width > MINING_WALL_WIDTH)
         return FALSE;
 
-    if ((y + height) > MINING_WALL_HEIGHT)
+    if (y + height > MINING_WALL_HEIGHT)
         return FALSE;
 
     for (u32 dx = 0; dx < width; dx++)
@@ -2454,7 +2456,6 @@ static bool32 CanStoneBePlacedAtXY(u32 x, u32 y, enum MiningId itemId) // PSF ma
 
     return TRUE;
 }
-
 
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_ENABLE_STONE_GENERATION_OPTIONS == FALSE
 static bool32 DoesStoneFitInItemMap(enum MiningId itemId)
@@ -3008,7 +3009,6 @@ static void Task_WallCollapseDelay(u8 taskId)
 }
 #endif
 
-
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_INFINITE_HITS == FALSE
 static void WallCollapseAnimation()
 {
@@ -3051,7 +3051,6 @@ static u32 GetTotalNumberOfBuriedItems(void)
     return count;
 }
 
-
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_INFINITE_HITS == FALSE
 static u32 GetNumberOfFoundItems(void)
 {
@@ -3064,7 +3063,6 @@ static u32 GetNumberOfFoundItems(void)
     return count;
 }
 #endif
-
 
 #if MINING_DEBUG_ENABLE == FALSE || MINING_DEBUG_INFINITE_HITS == FALSE
 static bool32 AreAllItemsFound(void)
