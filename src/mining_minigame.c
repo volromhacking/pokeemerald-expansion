@@ -1360,11 +1360,11 @@ static u32 MiningUtil_GetTotalTileAmount(enum MiningId itemId)
 
     for (u32 i = 0; i < 16; i++)
     {
-        if (sSpriteTileTable[itemId][i] == 1)
+        if (sSpriteTileTable[itemId][i] == TRUE)
             result++;
     }
     if (result == 0)
-        return result+1;
+        return result + 1;
 
     return result;
 }
@@ -1377,7 +1377,7 @@ static u32 MiningUtil_GetLeftValue(enum MiningId itemId)
     {
         for (u32 y = 0; y < 4; y++)
         {
-            if (sSpriteTileTable[itemId][x + y * 4] == 1)
+            if (sSpriteTileTable[itemId][x + y * 4] == TRUE)
             {
                 left++;
                 break;
@@ -1396,7 +1396,7 @@ static u32 MiningUtil_GetTopValue(enum MiningId itemId)
     {
         for (u32 x = 0; x < 4; x++)
         {
-            if (sSpriteTileTable[itemId][x + y * 4] == 1)
+            if (sSpriteTileTable[itemId][x + y * 4] == TRUE)
             {
                 top++;
                 break;

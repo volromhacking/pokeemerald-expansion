@@ -53,12 +53,18 @@ def IsTileTransparent(tile, data):
     return 0
 
 def turn_analysed_data_into_string(data, enum):
-    result = "\t\t"
+    result = "        "
+    isTileToDigUp = "FALSE"
 
     for i in data:
-        result = result + str(i) + ","
+        if i == 1:
+            isTileToDigUp = "TRUE"
+        elif i == 0:
+            isTileToDigUp = "FALSE"
+        result = result + isTileToDigUp + ", "
 
-    result = "\t[" + enum + "] = " + "{\n" + result + "\n" + "\t},\n"
+    result = result[:-1]
+    result = "    [" + enum + "] = " + "{\n" + result + "\n" + "    },\n"
     return result
 
 def get_id_by_path(data, filename, whichtype):
@@ -107,7 +113,7 @@ static const u32 sSpriteTileTable[][16] = {
                 analysed_sprite_data = []
 
     contents = contents + "};\n"
-    
+
     with open('./src/data/mining_minigame.h', 'w') as file:
         file.write(contents)
 
