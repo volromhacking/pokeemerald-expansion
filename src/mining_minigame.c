@@ -126,7 +126,7 @@ struct MiningState
 
     // Shake
     bool32 shouldShake;     // If set to true, shake gets executed every VBlank
-    u32 shakeState;         // State of shaking steps
+    u32 shakeStepCounter;   // Shake steps
     u32 shakeDuration;      // How many times should the shaking loop?
     u32 ShakeHitTool;
     u32 ShakeHitEffect;
@@ -1423,7 +1423,7 @@ static void Mining_Init(MainCallback callback)
     }
 
     sMiningUiState->leavingCallback = callback;
-    sMiningUiState->shakeState = 0;
+    sMiningUiState->shakeStepCounter = 0;
     sMiningUiState->shouldShake = FALSE;
     sMiningUiState->isCollapseAnimActive = FALSE;
     sMiningUiState->shakeDuration = 0;
@@ -1610,14 +1610,14 @@ static void MoveItemSprites(s16 dx, s16 dy)
 
 static void MiningUi_Shake(u8 taskId)
 {
-    switch (sMiningUiState->shakeState)
+    switch (sMiningUiState->shakeStepCounter)
     {
     case 0: // Left 1 - Down 1
         MakeCursorInvisible();
         if (!IsStressLevelMax() && Random() % 100 < 20) // 20 % chance of not shaking the screen
             sMiningUiState->toggleShakeDuringAnimation = TRUE;
         MoveItemSprites(-1, 1);
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 1:
         if (!sMiningUiState->toggleShakeDuringAnimation)
@@ -1627,13 +1627,13 @@ static void MiningUi_Shake(u8 taskId)
             SetGpuReg(REG_OFFSET_BG3VOFS, -1);
             SetGpuReg(REG_OFFSET_BG2VOFS, -1);
         }
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 3: // Right 2 - Up 2
         MoveItemSprites(3, -3);
         gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
         gSprites[sMiningUiState->ShakeHitTool].invisible = 1;
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 4:
         if (!sMiningUiState->toggleShakeDuringAnimation)
@@ -1643,7 +1643,7 @@ static void MiningUi_Shake(u8 taskId)
             SetGpuReg(REG_OFFSET_BG3VOFS, 2);
             SetGpuReg(REG_OFFSET_BG2VOFS, 2);
         }
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 6: // Down 2
         MoveItemSprites(-2, 4);
@@ -1652,7 +1652,7 @@ static void MiningUi_Shake(u8 taskId)
             gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
             gSprites[sMiningUiState->ShakeHitTool].invisible = 0;
         }
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 7:
         if (!sMiningUiState->toggleShakeDuringAnimation)
@@ -1662,12 +1662,12 @@ static void MiningUi_Shake(u8 taskId)
             SetGpuReg(REG_OFFSET_BG3HOFS, 0);
             SetGpuReg(REG_OFFSET_BG2HOFS, 0);
         }
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 9: // Left 2 - Up 2
         MoveItemSprites(-2, -4);
         gSprites[sMiningUiState->ShakeHitEffect].invisible = 1;
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 10:
         if (!sMiningUiState->toggleShakeDuringAnimation)
@@ -1677,7 +1677,7 @@ static void MiningUi_Shake(u8 taskId)
             SetGpuReg(REG_OFFSET_BG3VOFS, 2);
             SetGpuReg(REG_OFFSET_BG2VOFS, 2);
         }
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 12: // Right 1 - Down 1
         MoveItemSprites(3, 3);
@@ -1685,7 +1685,7 @@ static void MiningUi_Shake(u8 taskId)
             gSprites[sMiningUiState->ShakeHitEffect].invisible = 0;
         gSprites[sMiningUiState->ShakeHitTool].x += 7;
         StartSpriteAnim(&gSprites[sMiningUiState->ShakeHitTool], 1);
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 13:
         if (!sMiningUiState->toggleShakeDuringAnimation)
@@ -1695,11 +1695,11 @@ static void MiningUi_Shake(u8 taskId)
             SetGpuReg(REG_OFFSET_BG3VOFS, -1);
             SetGpuReg(REG_OFFSET_BG2VOFS, -1);
         }
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 15:
         MoveItemSprites(-1, -1);
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     case 16:
         SetGpuReg(REG_OFFSET_BG3VOFS, 0);
@@ -1711,7 +1711,7 @@ static void MiningUi_Shake(u8 taskId)
         if (sMiningUiState->shakeDuration > 0)
         {
             sMiningUiState->shakeDuration--;
-            sMiningUiState->shakeState = 0;
+            sMiningUiState->shakeStepCounter = 0;
             sMiningUiState->toggleShakeDuringAnimation = FALSE;
             break;
         }
@@ -1723,13 +1723,13 @@ static void MiningUi_Shake(u8 taskId)
         if (!IsStressLevelMax())
             gSprites[sMiningUiState->cursorSpriteIndex].invisible = 0;
         #endif
-        sMiningUiState->shakeState = 0;
+        sMiningUiState->shakeStepCounter = 0;
         sMiningUiState->shouldShake = FALSE;
         sMiningUiState->toggleShakeDuringAnimation = FALSE;
         DestroyTask(taskId);
         break;
     default:
-        sMiningUiState->shakeState++;
+        sMiningUiState->shakeStepCounter++;
         break;
     }
     BuildOamBuffer();
