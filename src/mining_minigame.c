@@ -2551,12 +2551,11 @@ static bool32 AtCornerOfRectangle(u32 row, u32 col, u32 baseRow, u32 baseCol, u3
 // Credits - Skeli
 static void Mining_DrawRandomTerrain(void)
 {
-    u32 row1, row2, col1, col2, x, y;
-    u32 i, j, totalTimes;
+    u32 row1, row2, col1, col2, x, y, i, totalTimes;
     s32 baseRow; // Rocks can go up to one row over on either top or bottom
     s32 baseCol; // Rocks can go up to one col over on either left or right
     s32 finalRow;
-    s32 finalCol, k, m;
+    s32 finalCol;
     u16 *ptr = GetBgTilemapBuffer(2);
 
     // Start by placing blank layer 3 rocks
@@ -2581,7 +2580,7 @@ static void Mining_DrawRandomTerrain(void)
 
         for (; row1 < row2; ++row1)
         {
-            for (j = col1; j < col2; ++j)
+            for (u32 j = col1; j < col2; ++j)
                 sMiningUiState->layerMap[j + row1 * 12] = TERRAIN_LAYER_4;
         }
     }
@@ -2602,12 +2601,12 @@ static void Mining_DrawRandomTerrain(void)
         finalRow = baseRow + 5;
         finalCol = baseCol + 5;
 
-        for (k = baseRow; k < finalRow; ++k)
+        for (s32 k = baseRow; k < finalRow; ++k)
         {
             if (k < 0 || k >= MINING_WALL_HEIGHT)
                 continue; // Not legal row
 
-            for (m = baseCol; m < finalCol; ++m)
+            for (s32 m = baseCol; m < finalCol; ++m)
             {
                 if (m < 0 || m >= MINING_WALL_WIDTH)
                     continue; // Not legal column
